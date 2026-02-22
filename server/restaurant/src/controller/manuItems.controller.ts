@@ -67,12 +67,14 @@ export const deleteManuItem = async (req: AuthenticatedRequest, res: Response) =
     if(!req.user){
         return res.status(401).json({ message: "Please login to delete menu item" });
     }
-    const { ItemId } = req.params;
+    const ItemId = req.params;
+    console.log(ItemId);
+    
     if(!ItemId){
         return res.status(400).json({ message: "Menu item ID is required" });
     }
 
-    const item = await Manu.findById(ItemId);
+    const item = await Manu.findById(ItemId.id);
     if(!item){
         return res.status(404).json({ message: "Menu item not found" });
     }
@@ -90,12 +92,14 @@ export const toggleManuItemAvailability = async (req: AuthenticatedRequest, res:
     if(!req.user){
         return res.status(401).json({ message: "Please login to update menu item" });
     }
-    const { ItemId } = req.params;
+    const ItemId  = req.params;
+    console.log(ItemId);
+    
     if(!ItemId){
         return res.status(400).json({ message: "Menu item ID is required" });
     }
 
-    const item = await Manu.findById(ItemId);
+    const item = await Manu.findById(ItemId.id);
     if(!item){
         return res.status(404).json({ message: "Menu item not found" });
     }
