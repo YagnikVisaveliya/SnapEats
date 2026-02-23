@@ -152,3 +152,112 @@ export const updateRestaurant = async (req: AuthenticatedRequest, res: Response)
         res.status(500).json({ message: "Internal server error" });
     }
 }
+
+
+export const getnearbyRestaurants = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { latitude, longitude, radius = 5000, search = "" } = req.query;
+        if(!latitude || !longitude){
+            return res.status(400).json({ message: "Latitude and longitude are required" });
+        }
+
+        const query: any = {
+            isVerified: true,
+        }
+
+        if(search && typeof search === "string"){
+            query.name = { $regex: search, $options: "i" };
+        }
+
+        const restaurants = await Restaurant.aggregate([
+            {
+                $geoNear: {
+                    near: {
+                        type: "Point",
+                        coordinates: [Number(longitude), Number(latitude)],
+                    },
+                    distanceField: "distance",
+                    maxDistance: Number(radius),
+                    spherical: true,
+                    query,
+                }, 
+            },
+            {
+                $sort: {
+                    isOpen: -1,
+                    distance: 1,
+                }
+            },
+            {
+                $addFields: {
+                    distanceKm:{ 
+                        $round: [{ $divide: ["$distance", 1000] }, 2]
+                    }
+                }
+            }
+        ]);
+
+        res.json({
+            success: true,
+            count: restaurants.length,
+            restaurants,
+        })
+
+    } catch (error: any) {
+        console.log("Error in getnearbyRestaurants:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const getSingleRestaurant = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const id = req.params.id;
+        const restaurant = await Restaurant.findById(id);
+
+        if(!restaurant){
+            return res.status(404).json({ message: "Restaurant not found" });
+        }
+        res.json({
+            success: true,
+            restaurant,
+        });
+    } catch (error: any) {
+        console.log("Error in getSingleRestaurant:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+// export const reverseGeocode = async (req: AuthenticatedRequest, res: Response) => {
+//     try {
+//         const { latitude, longitude } = req.query;
+
+//         if (!latitude || !longitude) {
+//             return res.status(400).json({ message: "Latitude and longitude are required" });
+//         }
+
+//         const lat = Number(latitude);
+//         const lon = Number(longitude);
+
+//         if (Number.isNaN(lat) || Number.isNaN(lon)) {
+//             return res.status(400).json({ message: "Invalid latitude or longitude" });
+//         }
+
+//         const { data } = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+//             params: {
+//                 format: "json",
+//                 lat,
+//                 lon,
+//             },
+//             headers: {
+//                 "User-Agent": "SnapEats/1.0 (support@snapeats.local)",
+//                 "Accept-Language": "en",
+//             },
+//             timeout: 10000,
+//         });
+
+//         return res.status(200).json({ success: true, data });
+//     } catch (error: any) {
+//         console.error("Error in reverseGeocode:", error?.response?.data || error?.message || error);
+//         return res.status(500).json({ message: "Failed to fetch location data" });
+//     }
+// }

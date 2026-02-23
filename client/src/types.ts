@@ -25,10 +25,10 @@ export interface AppContextType {
   location: LocationData | null;
   loadingLocation: boolean;
   city: string;
-//   cart: ICart[] | null;
-//   fetchCart: () => Promise<void>;
-//   subTotal: number;
-//   quauntity: number;
+  cart: ICart[] | null;
+  fetchCart: () => Promise<void>;
+  totalPrice: number;
+  quantity: number;
 }
 
 export interface IRestaurant {
@@ -66,8 +66,8 @@ export interface ICart {
   userId: string;
   restaurantId: string | IRestaurant;
   itemId: string | IMenuItem;
-  quauntity: number;
-  cretedAt: Date;
+  quantity: number;
+  createdAt: Date;
   updatedAt: Date;
 }
 
@@ -86,10 +86,10 @@ export interface IOrder {
     itemId: string;
     name: string;
     price: number;
-    quauntity: number;
+    quantity: number;
   }[];
 
-  subtotal: number;
+  totalPrice: number;
   deliveryFee: number;
   platfromFee: number;
   totalAmount: number;

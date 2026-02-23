@@ -1,5 +1,5 @@
 
-import {BrowserRouter,Routes,Route} from 'react-router-dom';
+import {BrowserRouter,Routes,Route, Router} from 'react-router-dom';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import ProtectedRoute from './utils/ProtectedRoute';
@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import Account from './pages/Account';
 import { useAppData } from './context/AppContext';
 import Restaurant from './pages/Restaurant';
+import RestaurantPage from './pages/RestaurantPage';
 
 const App = () => {
   const { user } = useAppData();
@@ -27,6 +28,7 @@ const App = () => {
             <Route path='/' element={<Home/>}/>
             <Route path='/select-role' element={<SelectRole/>}/>
             <Route path='/account' element={<Account/>}/>
+            <Route path='/restaurant/:id' element={<RestaurantPage/>}/>
           </Route>
         </Routes>
         

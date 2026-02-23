@@ -5,7 +5,7 @@ import { CgShoppingCart } from "react-icons/cg";
 import { BiMapPin, BiSearch } from "react-icons/bi";
 
 const Navbar = () => {
-  const { isAuth, city } = useAppData();
+  const { isAuth, city, quantity } = useAppData();
   const currLocation = useLocation();
 
   const isHomePage = currLocation.pathname === "/";
@@ -39,7 +39,7 @@ const Navbar = () => {
           <Link to={"/cart"} className="relative">
             <CgShoppingCart className="h-6 w-6 text-[#E23744]" />
             <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#E23744] text-xs font-semibold text-white">
-              0
+              {quantity}
             </span>
           </Link>
 

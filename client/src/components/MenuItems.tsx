@@ -1,10 +1,12 @@
 import { useState } from "react";
 import type { IMenuItem } from "../types";
-import { BsEye } from "react-icons/bs";
+import { BsCartPlus, BsEye } from "react-icons/bs";
 import { FiEyeOff } from "react-icons/fi";
 import { BiTrash } from "react-icons/bi";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { VscLoading } from "react-icons/vsc";
+import { useAppData } from "../context/AppContext";
 // import { VscLoading } from "react-icons/vsc";
 
 interface MenuItemsProps {
@@ -27,7 +29,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
           },
         }
       );
-      console.log(data);
+      // console.log(data);
       
       toast.success(data.message);
       onItemDeleted();
@@ -54,6 +56,32 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       }
     }
 
+    const { fetchCart } = useAppData();
+    const addToCart = async (restaurantId: string, itemId: string) => {
+      setLoadingItemId(itemId);
+      try {
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_RESTAURANT_SERVICE_URL}/api/cart/add`,
+          {
+            restaurantId,
+            itemId,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        toast.success(data.message);
+        fetchCart();
+      } catch (error:any) {
+        toast.error(error.response?.data?.message);
+        console.log("Error adding to cart:", error);
+      } finally {
+        setLoadingItemId(null);
+      }
+    };
+
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -65,6 +93,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
             <div className={`relative flex gap-4 rounded-lg bg-white p-4 shadow-sm transition ${
                 !item.isAvailable ? "opacity-70" : ""
               }`}
+              key={item._id}
             >
               <div className="relative shrink-0">
                 <img src={item.image} alt={item.name} className={`h-20 w-20 rounded object-cover ${!item.isAvailable ? "grayscale brightness-75" : ""}`} />
@@ -108,7 +137,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
                     </div>
                   )}
 
-                  {/* {!isSeller && (
+                  {!isSeller && (
                     <button
                       disabled={!item.isAvailable || isLoading}
                       onClick={() => addToCart(item.restaurantId, item._id)}
@@ -124,7 +153,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
                         <BsCartPlus size={18} />
                       )}
                     </button>
-                  )} */}
+                  )}
                 </div>
               </div>
             </div>
