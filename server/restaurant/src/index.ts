@@ -18,10 +18,13 @@ app.use(express.static("public"));
 import restaurantRoutes from './router/restaurant.route.js';
 import manuItemRoutes from './router/manuItem.route.js';
 import cartRoutes from './router/cart.route.js';
+import addressRoutes from './router/address.route.js';
 
 app.use("/api/restaurant", restaurantRoutes);
 app.use("/api/item", manuItemRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/address", addressRoutes);
+
 
 app.listen(process.env.PORT || 3001, () => {
   console.log(`Restaurant service is running on port ${process.env.PORT || 3001}`);
