@@ -4,6 +4,10 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 
 dotenv.config();
+
+await connectRabbitMQ();
+startPaymentConsumer();
+
 const app = express();
 
 app.use(cors({
@@ -19,11 +23,15 @@ import restaurantRoutes from './router/restaurant.route.js';
 import manuItemRoutes from './router/manuItem.route.js';
 import cartRoutes from './router/cart.route.js';
 import addressRoutes from './router/address.route.js';
+import orderrouter from './router/order.route.js';
+import { connectRabbitMQ } from './config/rabbitmq.js';
+import { startPaymentConsumer } from './config/payment.consumer.js';
 
 app.use("/api/restaurant", restaurantRoutes);
 app.use("/api/item", manuItemRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/address", addressRoutes);
+app.use("/api/order", orderrouter);
 
 
 app.listen(process.env.PORT || 3001, () => {

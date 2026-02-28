@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { AppProvider } from './context/AppContext.tsx'
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import "leaflet/dist/leaflet.css";
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

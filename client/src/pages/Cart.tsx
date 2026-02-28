@@ -60,7 +60,7 @@ const Cart = () => {
         resLng
     ) : 0;
 
-    const deliveryCharge = totalPrice > 150 ? 0 : distance < 2 ? 32 : distance * 16; // Example: $16 per km
+    const deliveryCharge = totalPrice > 150 ? 0 : distance < 2 ? 34 : distance * 17; // Example: $17 per km
 
     const plateformCharge = totalPrice * 0.05; // Example: 5% of total price
 

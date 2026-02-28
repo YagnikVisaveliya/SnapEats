@@ -11,6 +11,8 @@ import { useAppData } from './context/AppContext';
 import Restaurant from './pages/Restaurant';
 import RestaurantPage from './pages/RestaurantPage';
 import Cart from './pages/Cart';
+import Address from './pages/Address';
+import CheckOut from './pages/CheckOut';
 
 const App = () => {
   const { user } = useAppData();
@@ -27,10 +29,13 @@ const App = () => {
           </Route>
           <Route element={<ProtectedRoute/>}>
             <Route path='/' element={<Home/>}/>
+            <Route path='/address' element={<Address/>}/>
             <Route path='/select-role' element={<SelectRole/>}/>
             <Route path='/account' element={<Account/>}/>
             <Route path='/restaurant/:id' element={<RestaurantPage/>}/>
             <Route path='/cart' element={<Cart/>}/>
+            <Route path='/checkout' element={<CheckOut/>}/>
+
 
           </Route>
         </Routes>

@@ -38,7 +38,8 @@ export const deleteAddress = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const { addressId } = req.params;
+    const addressId  = req.params.id;
+    // console.log(addressId)
     if (!addressId) {
       return res.status(400).json({ message: "Address ID is required" });
     }
