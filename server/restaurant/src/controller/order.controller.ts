@@ -140,9 +140,9 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
 
 export const fetchOrderForPayment = async (req: AuthenticatedRequest, res: Response) => {
     if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
-        return res.status(403).json({
-        message: "Forbidden",
-        });
+      return res.status(403).json({
+      message: "Forbidden",
+      });
     }
 
     const order = await Order.findById(req.params.id);
@@ -163,4 +163,44 @@ export const fetchOrderForPayment = async (req: AuthenticatedRequest, res: Respo
         amount: order.totalAmount,
         currency: "INR",
     });
+}
+
+export const fetchRestaurantOrders = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { restaurantId } = req.params;
+
+    if(!restaurantId){
+        return res.status(400).json({ message: "Restaurant ID is required" });
+    }
+
+    const { limit } = req.query;
+
+    const orders = await Order.find({
+      restaurantId,
+      paymentStatus: "paid",
+    }).sort({ createdAt: -1 }).limit(limit ? parseInt(limit as string) : 20);
+
+    return res.json({
+      success: true,
+      count: orders.length,
+      orders,
+    })
+
+  } catch (error) {
+    console.error("Error fetching restaurant orders:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    
+  } catch (error) {
+    
+  }
 }
