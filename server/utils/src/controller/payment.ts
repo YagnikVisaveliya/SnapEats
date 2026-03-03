@@ -5,25 +5,49 @@ import { verifyRazorpaySignature } from "../config/verifyRazorpay.js";
 import { publishPaymentSuccess } from "../config/payment.producer.js";
 
 export const createRazorPayOrder = async (req: Request,res: Response) => {
-    const { orderId } = req.body;
+    try {
+        const { orderId } = req.body;
 
-    const { data } = await axios.get(`${process.env.RESTAURANT_URL}/api/order/payment/${orderId}`, {
-        headers: {
-            "x-internal-key": process.env.INTERNAL_SERVICE_KEY!,
+        if (!orderId) {
+            return res.status(400).json({ message: "orderId is required" });
         }
-        }
-        
-    );
-    const razorPayOrder = await razorpayInstance.orders.create({
-        amount: data.amount * 100, // Convert to paise
-        currency: data.currency || "INR",
-        receipt: orderId,
-    })
 
-    res.json({
-        razorpayOrderId: razorPayOrder.id,
-        key:process.env.KEY_SECRET!
-    });
+        const restaurantServiceBaseUrl =
+            process.env.RESTAURANT_URL ?? process.env.RESTAURANT_SERVICE;
+
+        if (!restaurantServiceBaseUrl) {
+            return res.status(500).json({
+                message: "Restaurant service URL is not configured",
+            });
+        }
+
+        const normalizedBaseUrl = restaurantServiceBaseUrl.trim().replace(/\/$/, "");
+
+        const { data } = await axios.get(
+            `${normalizedBaseUrl}/api/order/payment/${orderId}`,
+            {
+                headers: {
+                    "x-internal-key": process.env.INTERNAL_SERVICE_KEY!,
+                },
+            }
+        );
+
+        const razorPayOrder = await razorpayInstance.orders.create({
+            amount: data.amount * 100,
+            currency: data.currency || "INR",
+            receipt: orderId,
+        });
+
+        res.json({
+            razorpayOrderId: razorPayOrder.id,
+            key: process.env.KEY_ID!,
+        });
+    } catch (error: any) {
+        console.error("createRazorPayOrder error:", error?.response?.data || error?.message || error);
+        return res.status(500).json({
+            message: "Failed to create Razorpay order",
+        });
+    }
 }
 
 export const verifyPayment = async (req: Request, res: Response) => {

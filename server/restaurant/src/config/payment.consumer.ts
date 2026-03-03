@@ -9,10 +9,11 @@ export const startPaymentConsumer = async () => {
             if(!msg) return;
             try {
                 const event = JSON.parse(msg.content.toString());
-                if (event.type === "PAYMENT_SUCCESS") {
+                if (event.type !== "PAYMENT_SUCCESS") {
                     channel.ack(msg);
                     return;
                 }
+
                 const { orderId } = event.data;
                 
                 const order = await Order.findOneAndUpdate(
@@ -36,7 +37,7 @@ export const startPaymentConsumer = async () => {
                     return;
                 }
 
-                console.log("✅Order Placed:", order._id);
+                console.log("✅ Payment updated:", order._id);
                 //socket work
                 channel.ack(msg);
             } catch (error) {
