@@ -5,6 +5,7 @@ import { Cart } from "../model/cart.model.js";
 import { IRestaurant, Restaurant } from "../model/restaurant.model.js";
 import { IManu } from "../model/manu.model.js";
 import { Order } from "../model/order.model.js";
+import axios from "axios";
 
 export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   const user = req.user;
@@ -197,10 +198,107 @@ export const fetchRestaurantOrders = async (req: AuthenticatedRequest, res: Resp
   }
 }
 
+const ALLOWED_STATUSES = ["accepted", "preparing", "ready_for_rider"] as const;
+
 export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    
+      const user = req.user;
+      if(!user) {
+          return res.status(401).json({ message: "Unauthorized" });
+      }
+      const { orderId } = req.params;
+      const { status } = req.body;
+
+      if(!ALLOWED_STATUSES.includes(status)) {
+          return res.status(400).json({ message: `Invalid status. Allowed statuses are: ${ALLOWED_STATUSES.join(", ")}` });
+      }
+
+      const order  = await Order.findById(orderId);
+      if(!order){
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if(order.paymentStatus !== "paid") {
+        return res.status(400).json({ message: "Cannot update status of unpaid order" });
+      }
+
+      const restaurant = await Restaurant.findById(order.restaurantId);
+      if(!restaurant) {
+        return res.status(404).json({ message: "Restaurant not found" });
+      }
+
+      if(restaurant.ownerId.toString() !== user._id.toString()) {
+        return res.status(403).json({ message: "You are not the owner of the restaurant" });
+      }
+
+      order.status = status;
+      await order.save();
+
+      await axios.post(`${process.env.REALTIME_SERVICE_URL}/api/v1/internal/emit`,{
+        event: "order:status_updated",
+        room: `user:${order.userId}`,
+        payload: {
+          orderId: order._id.toString(),
+          status: order.status,
+        }
+      },{
+        headers: {
+          "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+        }
+      })
+      //now assign rider if order is ready for pickup
+      res.json({ message: "Order status updated successfully", order });
+
   } catch (error) {
-    
+    console.error("Error updating order status:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export const getMyOrders = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user;
+    if(!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const orders = await Order.find({ userId: user._id.toString(), paymentStatus: "paid" }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: orders.length,
+      orders,
+    })
+
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export const getSingleOrder = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user;
+    if(!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if(!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if(order.userId.toString() !== user._id.toString()) {
+      return res.status(403).json({ message: "You are not authorized to view this order" });
+    }
+
+    res.json({
+      success: true,
+      order,
+    });
+
+  } catch (error) {
+    console.error("Error fetching single order:", error);
+    res.status(500).json({ message: "Internal server error" }); 
   }
 }

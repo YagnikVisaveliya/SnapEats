@@ -5,7 +5,7 @@ import App from './App.tsx'
 import { AppProvider } from './context/AppContext.tsx'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import "leaflet/dist/leaflet.css";
-import { SocketProvider } from './context/socketContext.tsx'
+import { SocketProvider } from './context/SocketContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
