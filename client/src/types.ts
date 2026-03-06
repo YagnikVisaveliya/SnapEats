@@ -80,7 +80,7 @@ export interface IOrder {
   riderPhone: number | null;
   riderName: string | null;
   distance: number;
-  riderAmount: number;
+  riderEarning: number;
 
   items: {
     itemId: string;
@@ -89,9 +89,9 @@ export interface IOrder {
     quantity: number;
   }[];
 
-  totalPrice: number;
-  deliveryFee: number;
-  platfromFee: number;
+  subTotal: number;
+  deliveryCharge: number;
+  platformCharge: number;
   totalAmount: number;
 
   addressId: string;
@@ -116,7 +116,7 @@ export interface IOrder {
   paymentMethod: "razorpay" | "stripe";
   paymentStatus: "pending" | "paid" | "failed";
 
-  expiresAt: Date;
+  expireAt: Date;
 
   createdAt: Date;
   updatedAt: Date;

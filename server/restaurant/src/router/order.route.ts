@@ -8,7 +8,7 @@ const router = Router();
 router.route('/new').post(isAuth,createOrder);
 router.route('/payment/:id').get(fetchOrderForPayment)
 router.route('/my').get(isAuth,getMyOrders)
-router.route('/:restaurantId').get(isAuth,isSeller,fetchRestaurantOrders)
+router.route('/restaurant/:restaurantId').get(isAuth,isSeller,fetchRestaurantOrders)
 router.route('/:orderId').put(isAuth,isSeller,updateOrderStatus)
 router.route('/:id').get(isAuth,getSingleOrder)
 
