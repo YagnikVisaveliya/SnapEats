@@ -45,7 +45,7 @@ export const addRiderProfile = async (req: AuthenticatedRequest, res: any) => {
             drivingLicenseNumber,
             aadharNumber,
             location: {
-                type: "point",
+                type: "Point",
                 coordinates: [longitude, latitude],
             },
             isAvailable: false,
@@ -53,8 +53,15 @@ export const addRiderProfile = async (req: AuthenticatedRequest, res: any) => {
         })
         return res.status(201).json({ message: "Rider profile created successfully", rider });
 
-    } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+    } catch (error: any) {
+        console.error("addRiderProfile error:", error?.response?.data || error?.message || error);
+
+        const upstreamMessage = error?.response?.data?.message;
+        if (upstreamMessage) {
+            return res.status(500).json({ message: upstreamMessage });
+        }
+
+        return res.status(500).json({ message: error?.message || "Internal server error" });
     }
 }
 
@@ -67,6 +74,8 @@ export const getMyProfile = async (req: AuthenticatedRequest, res: any) => {
         if(!rider) {
             return res.status(404).json({ message: "Rider profile not found" });
         }
+        console.log(rider);
+        
         return res.json({ rider });
     } catch (error) {
         return res.status(500).json({ message: "Internal server error" });
@@ -104,7 +113,7 @@ export const updateAvailability = async (req: AuthenticatedRequest, res: any) =>
 
         rider.isAvailable = isAvailable;
         rider.location = {
-            type: "point",
+            type: "Point",
             coordinates: [longitude, latitude],
         }
         rider.lastActiveAt = new Date();

@@ -17,11 +17,20 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import OrderSuccess from './pages/OrderSuccess';
 import Orders from './pages/Orders';
 import OrderPage from './pages/OrderPage';
+import RiderDashboard from './pages/RiderDashboard';
 
 const App = () => {
-  const { user } = useAppData();
+  const { user ,loading } = useAppData();
+
+  if(loading) {
+    return <div className="text-center my-80 font-bold text-gray-500">Loading...</div>;
+  }
+
   if(user && user.role === "seller"){
     return <Restaurant />
+  }
+  if(user && user.role === "rider"){
+    return <RiderDashboard />
   }
   return (
     <>
@@ -43,8 +52,6 @@ const App = () => {
             <Route path='/order/:id' element={<OrderPage/>}/>
             <Route path='/paymentsuccess/:paymentId' element={<PaymentSuccess/>}/>
             <Route path='/order-success' element={<OrderSuccess/>}/>
-
-
 
           </Route>
         </Routes>

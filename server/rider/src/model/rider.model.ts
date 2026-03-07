@@ -8,7 +8,7 @@ export interface IRider extends Document {
     drivingLicenseNumber: string;
     isVerified: boolean;
     location: {
-        type: "point";
+        type: "Point";
         coordinates: [number, number];
     };
     isAvailable: boolean;
@@ -54,8 +54,8 @@ const RiderSchema: Schema = new Schema<IRider>(
         location: {
             type: {
                 type: String,
-                enum: ["point"],
-                default: "point",
+                enum: ["Point"],
+                default: "Point",
             },
             coordinates: {
                 type: [Number],

@@ -19,8 +19,7 @@ const RestaurantOrders = ({ restaurantId }: { restaurantId: string }) => {
   const [loading, setLoading] = useState(true);
   const [audioUnlock, setAudioUnlock] = useState(false);
 
-  const socketContext = useSocket();
-  const socket = socketContext?.socket;
+  const socket = useSocket();
   const audioref = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {

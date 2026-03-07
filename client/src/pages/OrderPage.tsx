@@ -6,8 +6,7 @@ import axios from "axios";
 
 const OrderPage = () => {
   const { id } = useParams();
-  const socketContext = useSocket();
-  const socket = socketContext?.socket;
+  const socket = useSocket();
 
   const [order, setOrder] = useState<IOrder | null>(null);
   const [loading, setLoading] = useState(true);
