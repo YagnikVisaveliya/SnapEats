@@ -8,11 +8,9 @@ export const connectRabbitMQ = async () => {
 
         channel = await connection.createChannel();
 
-        await channel.assertQueue(process.env.PAYMENT_QUEUE!, { durable: true });
-
         await channel.assertQueue(process.env.RIDER_QUEUE!, { durable: true });
 
-        console.log("🐇 Connected to RabbitMQ (restaurent service)");
+        console.log("🐇 Connected to RabbitMQ (rider service)");
     } catch (error) {
         console.log("error in connecting rabbitMq", error)
     }

@@ -4,6 +4,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 
 dotenv.config();
+await connectRabbitMQ();
 
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(cors({
 app.use(express.json());
 
 import riderRoutes from './router/rider.route.js';
+import { connectRabbitMQ } from './config/rabbitMQ.js';
 
 app.use('/api/rider', riderRoutes);
 
