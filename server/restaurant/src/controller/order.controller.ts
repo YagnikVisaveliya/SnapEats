@@ -440,7 +440,7 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
     });
   }
 
-  const { orderId } = req.body;
+  const { orderId } = req.query;
 
   const order = await Order.findById(orderId);
 

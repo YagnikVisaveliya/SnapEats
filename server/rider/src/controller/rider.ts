@@ -2,6 +2,7 @@ import axios from "axios";
 import getBuffer from "../config/dataUri.js";
 import { AuthenticatedRequest } from "../middleware/isAuth.middleware.js";
 import { Rider } from "../model/rider.model.js";
+import { log } from "console";
 
 export const addRiderProfile = async (req: AuthenticatedRequest, res: any) => {
     try {
@@ -123,5 +124,109 @@ export const updateAvailability = async (req: AuthenticatedRequest, res: any) =>
 
     } catch (error) {
         return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const acceptOrder = async (req: AuthenticatedRequest, res: any) => {
+    try {
+        const riderUserId = req.user?._id;
+        if (!riderUserId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        const { orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).json({ message: "Order ID is required" });
+        }
+        const rider = await Rider.findOne({ userId: riderUserId, isAvailable: true });
+        if (!rider) {
+            return res.status(404).json({ message: "Rider not found or not available" });
+        }
+
+       const { data } = await axios.put(`${process.env.REALTIME_SERVICE_URL}/api/order/assign/rider`,
+        {
+            orderId,
+            riderId: rider._id,
+            riderUserId: rider.userId,
+            ridername: rider.picture,
+            riderPhone: rider.phoneNumber,            
+        },
+        {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+            },
+        }
+       ) 
+       if(data.success) {
+        const riderDetails = await Rider.findOneAndUpdate({
+            userId: riderUserId,
+            isAvailable: true,
+        },
+        {
+            isAvailable: false,
+
+        },
+        { new: true }
+        );
+        return res.json({ message: "Order accepted successfully" });
+       }
+
+    } catch (error) {
+        res.status(400).json({ message: "Order not accepted" });
+    }
+}
+
+export const fetchMyCurrentOrders = async (req: AuthenticatedRequest, res: any) => {
+    const riderUserId = req.user?._id;
+    if (!riderUserId) {
+        return res.status(401).json({ message: "Please login" });
+    }
+    try {
+        const rider = await Rider.findOne({ userId: riderUserId, isAvailable: true });
+        if (!rider) {
+            return res.status(404).json({ message: "Rider not found or not available" });
+        }
+
+        const { data } = await axios.get(`${process.env.REALTIME_SERVICE_URL}/api/order/current/rider?riderId=${rider._id}`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+            },
+        });
+        console.log(data)
+        return res.json({ order: data.order });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const updateOrderStatus = async (req: AuthenticatedRequest, res: any) => {
+    const userId = req.user?._id;
+    if(!userId) {
+        return res.status(401).json({ message: "Please login" });
+    }
+    try {
+        const rider = await Rider.findOne({ userId });
+
+        if(!rider) {
+            return res.status(404).json({ message: "Rider profile not found" });
+        }
+
+        const { orderId } = req.params;
+
+        try {
+            const { data } = await axios.put(`${process.env.REALTIME_SERVICE_URL}/api/order/update-status/rider`, {
+                orderId,
+
+            }, {
+                headers: {
+                    "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+                },
+             }
+            )
+            res.json({ message: data.message });
+        } catch (error) {
+            return res.status(500).json({ message: "error in update status" });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });      
     }
 }
