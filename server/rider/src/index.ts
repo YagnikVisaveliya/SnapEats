@@ -5,6 +5,7 @@ import connectDB from './config/db.js';
 
 dotenv.config();
 await connectRabbitMQ();
+startOrderReadyConsumer();
 
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 
 import riderRoutes from './router/rider.route.js';
 import { connectRabbitMQ } from './config/rabbitMQ.js';
+import { startOrderReadyConsumer } from './config/orderReady.consumer.js';
 
 app.use('/api/rider', riderRoutes);
 

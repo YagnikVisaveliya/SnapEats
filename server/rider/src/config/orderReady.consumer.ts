@@ -11,13 +11,15 @@ export const startOrderReadyConsumer = async () => {
             try {
                 console.log("Recieved message",msg.content.toString());
 
-                const event = JSON.parse(msg.content.toString());
-                if (event.type !== "ORDER_READY_FOR_RIDER") {
+                const parsed = JSON.parse(msg.content.toString());
+                // Support both legacy { type, data } and current { event, data } payload shapes.
+                const eventType = parsed.type || parsed.event;
+                if (eventType !== "ORDER_READY_FOR_RIDER") {
                     channel.ack(msg);
                     return;
                 }
 
-                const { orderId, restaurantId, location } = event.data;
+                const { orderId, restaurantId, location } = parsed.data;
                 console.log("Searching rider for near me");
 
                 const riders = await Rider.find({
@@ -53,6 +55,7 @@ export const startOrderReadyConsumer = async () => {
                                 "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
                             }
                         }
+                        
                     );
                     console.log(`Notified rider userId: ${rider.userId} successfully`)
                     } catch (error) {

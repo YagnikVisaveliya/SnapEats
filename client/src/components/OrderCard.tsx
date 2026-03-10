@@ -50,7 +50,7 @@ const OrderCard = ({ order, onStatusUpdate }: props) => {
   const updateStatus = async (newStatus: string) => {
     try {
       setLoading(true);
-        setRetryVisible(false);
+      setRetryVisible(false);
       await axios.put(`${import.meta.env.VITE_RESTAURANT_SERVICE_URL}/api/order/${order._id}`,
         { status: newStatus },
         {

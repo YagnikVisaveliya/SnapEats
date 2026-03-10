@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppData } from "../context/AppContext";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -8,6 +8,10 @@ import {
   BiPhoneCall,
   BiUpload,
 } from "react-icons/bi";
+import { useSocket } from "../context/SocketContext";
+import type { IOrder } from "../types";
+import audio from "../assets/zomato_notif_1.mp3";
+import RiderOrderRequest from "../components/riderOrderRequest";
 
 interface IRider {
   _id: string;
@@ -27,11 +31,60 @@ interface IRider {
 
 const RiderDashboard = () => {
   const { user } = useAppData();
+  const socket = useSocket();
   
 
   const [profile, setProfile] = useState<IRider | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+
+  const [incommingOrder, setIncomingOrder] = useState<string[]>([]);
+  const [currentOrder, setCurrentOrder] = useState<IOrder | null>(null);
+
+  const [audioUnlock, setAudioUnlock] = useState(false);
+  const audioref = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioref.current = new Audio(audio);
+    audioref.current.preload = "auto";
+  }, []);
+
+  const unlockAudio = async () => {
+    try {
+      if(!audioref.current) return;
+      await audioref.current.play();
+      audioref.current.pause();
+      audioref.current.currentTime = 0;
+      setAudioUnlock(true);
+      toast.success("Audio unlocked");
+    } catch (error) {
+      toast.error("try again to unlock audio");
+    }
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+    const onNewOrder = ({orderId}: { orderId: string }) => {
+      setIncomingOrder((prev) => prev.includes(orderId) ? prev : [...prev, orderId]);
+
+      if(audioUnlock && audioref.current){
+        audioref.current.currentTime = 0;
+        audioref.current.play().catch((error)=>{
+          console.log("Error playing audio:", error);
+        });
+      }
+
+      setTimeout(() => {
+        setIncomingOrder((prev) => prev.filter((id) => id !== orderId));
+      }, 10000);
+    };
+    socket.on("order:available", onNewOrder);
+
+    return () => {
+      socket.off("order:available", onNewOrder);
+    };
+    
+  }, [socket, audioUnlock]);
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [drivingLicenseNumber, setDrivingLicenseNumber] = useState("");
@@ -69,6 +122,25 @@ const RiderDashboard = () => {
     if (user?.role === "rider") fetchProfile();
     else setLoading(false);
   }, [user]);
+
+  const fetchCurrentOrder = async () => {
+    try {
+      const { data }= await axios.get(`${import.meta.env.VITE_RIDER_SERVICE_URL}/api/rider/order/current`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      setCurrentOrder(data.order);
+    } catch (error) {
+      setCurrentOrder(null);
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    fetchCurrentOrder();
+  }, []);
 
   const toggleAvailiblity = async () => {
     if (!navigator.geolocation) {
@@ -306,6 +378,42 @@ const RiderDashboard = () => {
           </p>
         )}
       </div>
+      {!audioUnlock && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔔</span>
+            <div>
+              <p className="font-medium text-blue-900">
+                Enable Sound Notification
+              </p>
+              <p className="text-sm text-blue-700">
+                Get Notified when new orders arrive
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={unlockAudio}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+          >
+            Enable sound
+          </button>
+        </div>
+      )}
+      {
+        profile.isAvailable && incommingOrder.length > 0 && 
+          <div className="mx-auto max-w-md px-4 space-y-3">
+            <h3 className="font-semibold text-gray-500">New Order Available</h3>
+            {
+              incommingOrder.map((orderId) => (
+                <RiderOrderRequest key={orderId} orderId={orderId} onAccepted={() => {
+                  fetchProfile();
+                  fetchCurrentOrder();
+                }} />
+              ))
+            }
+          </div>
+      }
     </div>
   );
 };

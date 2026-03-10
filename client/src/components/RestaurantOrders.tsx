@@ -88,6 +88,19 @@ const RestaurantOrders = ({ restaurantId }: { restaurantId: string }) => {
     };
   }, [socket, audioUnlock]);
 
+  useEffect(() => {
+    if(!socket) return;
+    const onUpdateOrder = () => {
+      fetchOrders();
+    }
+    socket.on("order:rider_assigned", onUpdateOrder);
+
+    return () => {
+      socket.off("order:rider_assigned", onUpdateOrder);
+    }
+
+  }, [socket]);
+
   if (loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">

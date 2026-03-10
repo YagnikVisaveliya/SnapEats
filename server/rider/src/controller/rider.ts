@@ -75,7 +75,7 @@ export const getMyProfile = async (req: AuthenticatedRequest, res: any) => {
         if(!rider) {
             return res.status(404).json({ message: "Rider profile not found" });
         }
-        console.log(rider);
+        // console.log(rider);
         
         return res.json({ rider });
     } catch (error) {
@@ -142,12 +142,12 @@ export const acceptOrder = async (req: AuthenticatedRequest, res: any) => {
             return res.status(404).json({ message: "Rider not found or not available" });
         }
 
-       const { data } = await axios.put(`${process.env.REALTIME_SERVICE_URL}/api/order/assign/rider`,
+    const { data } = await axios.put(`${process.env.RESTAURANT_SERVICE_URL}/api/order/assign/rider`,
         {
             orderId,
             riderId: rider._id,
             riderUserId: rider.userId,
-            ridername: rider.picture,
+            riderName: req.user?.name || rider.userId,
             riderPhone: rider.phoneNumber,            
         },
         {
@@ -156,8 +156,8 @@ export const acceptOrder = async (req: AuthenticatedRequest, res: any) => {
             },
         }
        ) 
-       if(data.success) {
-        const riderDetails = await Rider.findOneAndUpdate({
+       if(data?.success) {
+        await Rider.findOneAndUpdate({
             userId: riderUserId,
             isAvailable: true,
         },
@@ -170,8 +170,14 @@ export const acceptOrder = async (req: AuthenticatedRequest, res: any) => {
         return res.json({ message: "Order accepted successfully" });
        }
 
-    } catch (error) {
-        res.status(400).json({ message: "Order not accepted" });
+       return res.status(409).json({ message: data?.message || "Order could not be accepted" });
+
+    } catch (error: any) {
+        const upstreamStatus = error?.response?.status;
+        const upstreamMessage = error?.response?.data?.message;
+        return res
+            .status(typeof upstreamStatus === "number" ? upstreamStatus : 500)
+            .json({ message: upstreamMessage || "Order not accepted" });
     }
 }
 
@@ -181,20 +187,29 @@ export const fetchMyCurrentOrders = async (req: AuthenticatedRequest, res: any) 
         return res.status(401).json({ message: "Please login" });
     }
     try {
-        const rider = await Rider.findOne({ userId: riderUserId, isAvailable: true });
+        const rider = await Rider.findOne({ userId: riderUserId });
         if (!rider) {
-            return res.status(404).json({ message: "Rider not found or not available" });
+            return res.status(404).json({ message: "Rider not found" });
         }
 
-        const { data } = await axios.get(`${process.env.REALTIME_SERVICE_URL}/api/order/current/rider?riderId=${rider._id}`, {
+        const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE_URL}/api/order/current/rider?riderId=${rider._id}`, {
             headers: {
                 "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
             },
         });
-        console.log(data)
-        return res.json({ order: data.order });
-    } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        const order = data?.order ?? data ?? null;
+        return res.json({ order });
+    } catch (error:any) {
+        const upstreamStatus = error?.response?.status;
+        const upstreamMessage = error?.response?.data?.message;
+
+        if (upstreamStatus === 404) {
+            return res.json({ order: null });
+        }
+
+        return res
+            .status(typeof upstreamStatus === "number" ? upstreamStatus : 500)
+            .json({ message: upstreamMessage || "Failed to fetch current order" });
     }
 }
 
@@ -213,7 +228,7 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: any) => 
         const { orderId } = req.params;
 
         try {
-            const { data } = await axios.put(`${process.env.REALTIME_SERVICE_URL}/api/order/update-status/rider`, {
+            const { data } = await axios.put(`${process.env.RESTAURANT_SERVICE_URL}/api/order/update-status/rider`, {
                 orderId,
 
             }, {

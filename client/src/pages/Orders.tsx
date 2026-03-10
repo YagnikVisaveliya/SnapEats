@@ -17,8 +17,7 @@ const Orders = () => {
     const [orders, setOrders] = useState<IOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
-    const socketContext = useSocket();
-    const socket = socketContext?.socket;
+    const socket = useSocket();
 
     const fetchOrders = async () => {
         try {
@@ -49,9 +48,11 @@ const Orders = () => {
         }
 
         socket.on("order:status_updated", onOrderUpdate);
+        socket.on("order:rider_assigned", onOrderUpdate);
 
         return ()=> {
             socket.off("order:status_updated", onOrderUpdate);
+            socket.off("order:rider_assigned", onOrderUpdate);
         }
     },[socket]);
 

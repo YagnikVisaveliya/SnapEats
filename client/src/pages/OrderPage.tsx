@@ -41,8 +41,10 @@ const OrderPage = () => {
       fetchOrder();
     };
     socket.on("order:status_updated", onOrderUpdate);
+    socket.on("order:rider_assigned", onOrderUpdate);
     return () => {
       socket.off("order:status_updated", onOrderUpdate);
+      socket.off("order:rider_assigned", onOrderUpdate);
     };
   }, [socket]);
 
