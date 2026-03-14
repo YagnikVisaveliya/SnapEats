@@ -11,7 +11,8 @@ import {
 import { useSocket } from "../context/SocketContext";
 import type { IOrder } from "../types";
 import audio from "../assets/zomato_notif_1.mp3";
-import RiderOrderRequest from "../components/riderOrderRequest";
+import RiderOrderRequest from "../components/RiderOrderRequest";
+import RiderCurrentOrder from "../components/RiderCurrentOrder";
 
 interface IRider {
   _id: string;
@@ -358,7 +359,7 @@ const RiderDashboard = () => {
           Please be within a 500m radius of a restaurant hotspot before going online to receive orders.
         </section>
 
-        {profile.isVerified ? (
+        {profile.isVerified && !currentOrder && (
           <button
             onClick={toggleAvailiblity}
             disabled={toggling}
@@ -372,48 +373,70 @@ const RiderDashboard = () => {
           >
             {toggling ? "Updating..." : profile.isAvailable ? "Go Offline" : "Go Online"}
           </button>
-        ) : (
-          <p className="text-center text-sm font-medium text-amber-700">
-            Your profile must be verified before you can go online.
-          </p>
         )}
       </div>
       {!audioUnlock && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+      <div className="sticky top-4 z-30 mx-auto max-w-3xl px-4">
+        <div className="flex items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-4 shadow-sm">
+
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🔔</span>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white text-xl shadow">
+              🔔
+            </div>
+
             <div>
-              <p className="font-medium text-blue-900">
-                Enable Sound Notification
+              <p className="font-semibold text-blue-900">
+                Enable Sound Notifications
               </p>
               <p className="text-sm text-blue-700">
-                Get Notified when new orders arrive
+                So you never miss a new delivery request
               </p>
             </div>
           </div>
 
           <button
             onClick={unlockAudio}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 active:scale-95 transition"
           >
-            Enable sound
+            Enable Sound
           </button>
+
         </div>
-      )}
-      {
-        profile.isAvailable && incommingOrder.length > 0 && 
-          <div className="mx-auto max-w-md px-4 space-y-3">
-            <h3 className="font-semibold text-gray-500">New Order Available</h3>
-            {
-              incommingOrder.map((orderId) => (
-                <RiderOrderRequest key={orderId} orderId={orderId} onAccepted={() => {
-                  fetchProfile();
-                  fetchCurrentOrder();
-                }} />
-              ))
-            }
-          </div>
-      }
+      </div>
+    )}
+    {profile.isAvailable && incommingOrder.length > 0 && (
+      <div className="mx-auto mt-6 max-w-md px-4">
+
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Incoming Orders
+          </h3>
+
+          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+            {incommingOrder.length} New
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          {incommingOrder.map((orderId) => (
+            <RiderOrderRequest
+              key={orderId}
+              orderId={orderId}
+              onAccepted={() => {
+                fetchProfile();
+                fetchCurrentOrder();
+              }}
+            />
+          ))}
+        </div>
+
+      </div>
+    )}
+    {
+      currentOrder && <div className="mx-auto space-y-4 max-w-md px-4">
+        <RiderCurrentOrder order={currentOrder} onStatusUpdate={fetchCurrentOrder}/>
+      </div>
+    }
     </div>
   );
 };

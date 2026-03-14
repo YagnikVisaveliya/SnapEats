@@ -187,7 +187,7 @@ export const fetchMyCurrentOrders = async (req: AuthenticatedRequest, res: any) 
         return res.status(401).json({ message: "Please login" });
     }
     try {
-        const rider = await Rider.findOne({ userId: riderUserId });
+        const rider = await Rider.findOne({ userId: riderUserId, isVerified: true, });
         if (!rider) {
             return res.status(404).json({ message: "Rider not found" });
         }
@@ -238,8 +238,8 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: any) => 
              }
             )
             res.json({ message: data.message });
-        } catch (error) {
-            return res.status(500).json({ message: "error in update status" });
+        } catch (error:any) {
+            return res.status(500).json({ message: error?.response?.data?.message});
         }
     } catch (error) {
         return res.status(500).json({ message: "Internal server error" });      

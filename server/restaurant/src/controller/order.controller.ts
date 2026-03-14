@@ -111,7 +111,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     restaurantName: restaurant.name,
     riderId: null,
     distance,
-    riderEarning,
+    riderEarning: riderEarning,
     items: orderItems,
     subTotal,
     deliveryCharge: deliveryFee,
@@ -350,6 +350,13 @@ export const assignRiderToOrder = async (req: Request, res: Response) => {
 
   const { orderId, riderId, riderName, riderPhone } = req.body;
 
+  const orderAvailable = await Order.findOne({ riderId, status: { $ne: "delivered" } });
+  if (orderAvailable) {
+    return res.status(409).json({
+      message: "Rider is currently assigned to another order",
+    });
+  }
+
   const order = await Order.findById(orderId);
   if (order?.riderId !== null) {
     return res.status(404).json({
@@ -440,7 +447,15 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
     });
   }
 
-  const { orderId } = req.query;
+  const orderId =
+    (req.body?.orderId as string | undefined) ||
+    (req.query?.orderId as string | undefined);
+
+  if (!orderId) {
+    return res.status(400).json({
+      message: "Order id is required",
+    });
+  }
 
   const order = await Order.findById(orderId);
 
@@ -483,7 +498,7 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
       },
     );
 
-    res.json({
+    return res.json({
       message: "Order status updated to picked up",
     });
   }
@@ -519,5 +534,13 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
         },
       },
     );
+
+    return res.json({
+      message: "Order status updated to delivered",
+    });
   }
+
+  return res.status(400).json({
+    message: `Cannot update order from status ${order.status}`,
+  });
 };

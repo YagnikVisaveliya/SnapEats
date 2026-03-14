@@ -10,7 +10,8 @@ export const connectRabbitMQ = async () => {
 
         await channel.assertQueue(process.env.PAYMENT_QUEUE!, { durable: true });
 
-        await channel.assertQueue(process.env.RIDER_QUEUE!, { durable: true });
+        // Queue used by publishEvent("ORDER_READY_FOR_RIDER", ...) in order controller.
+        await channel.assertQueue(process.env.ORDER_READY_QUEUE!, { durable: true });
 
         console.log("🐇 Connected to RabbitMQ (restaurent service)");
     } catch (error) {
