@@ -1,17 +1,21 @@
 import { MongoClient, Db} from "mongodb";
 
-let client: MongoClient;
-let db: Db; 
+let client: MongoClient | null = null;
+const dbCache = new Map<string, Db>();
 
-export const connectDb = async (): Promise<Db> => {
-    if(db) {
-        return db;
+export const connectDb = async (dbName: string): Promise<Db> => {
+    const cachedDb = dbCache.get(dbName);
+    if (cachedDb) {
+        return cachedDb;
     }
 
-    client = new MongoClient(process.env.MONGODB_URI!);
-    await client.connect();
-    db = client.db(process.env.DB_NAME);
+    if (!client) {
+        client = new MongoClient(process.env.MONGODB_URI!);
+        await client.connect();
+        console.log("Admin connected to MongoDB");
+    }
 
-    console.log("Admin connect to mongoDb")
+    const db = client.db(dbName);
+    dbCache.set(dbName, db);
     return db;
-}
+};
