@@ -3,6 +3,7 @@ import { useSocket } from "../context/SocketContext";
 import { useEffect, useState } from "react";
 import type { IOrder } from "../types";
 import axios from "axios";
+import UserOrderMap from "../components/UserOrderMap";
 
 const OrderPage = () => {
   const { id } = useParams();
@@ -45,6 +46,30 @@ const OrderPage = () => {
     return () => {
       socket.off("order:status_updated", onOrderUpdate);
       socket.off("order:rider_assigned", onOrderUpdate);
+    };
+  }, [socket]);
+
+  const [riderLocation, setRiderLocation] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const onRiderLocation = ({
+      latitude,
+      longitude,
+    }: {
+      latitude: number;
+      longitude: number;
+    }) => {
+      console.log("Rider location:", latitude, longitude);
+      setRiderLocation([latitude, longitude]);
+    };
+
+
+    socket.on("rider:location", onRiderLocation);
+
+    return () => {
+      socket.off("rider:location", onRiderLocation);
     };
   }, [socket]);
 
@@ -137,15 +162,7 @@ const OrderPage = () => {
         </div>
       </div>
 
-      {/* {
-        (order.status === "rider_assigned" || order.status === "picked_up") && 
-          (riderLocation ? (
-            <div> LOcation </div>
-          ) : (
-            <p>Waiting for rider location</p>
-          ))
-      } */}
-      {/* {(order.status === "rider_assigned" || order.status === "picked_up") &&
+      {(order.status === "rider_assigned" || order.status === "picked_up") &&
         (riderLocation ? (
           <UserOrderMap
             riderLocation={riderLocation}
@@ -156,7 +173,7 @@ const OrderPage = () => {
           />
         ) : (
           <p>Waiting for rider location</p>
-        ))} */}
+        ))}
     </div>
   );
 };

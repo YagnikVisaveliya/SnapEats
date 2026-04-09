@@ -64,7 +64,7 @@ const RiderCurrentOrder = ({ order, onStatusUpdate }: Props) => {
         }
         <div className="space-y-2">
             {order.status === "rider_assigned" && <button onClick={()=>updateStatus()} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg py-2 font-semibold
-            ">Reached Restaurent</button>}
+            ">Reached Restaurant</button>}
 
             {order.status === "picked_up" && <button onClick={()=>updateStatus()} className="w-full bg-green-500 hover:bg-green-600 text-white rounded-lg py-2 font-semibold
             ">Mark As Delivered</button>}
