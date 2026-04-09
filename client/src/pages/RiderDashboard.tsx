@@ -10,9 +10,9 @@ import {
 } from "react-icons/bi";
 import { useSocket } from "../context/SocketContext";
 import type { IOrder } from "../types";
-import audio from "../assets/zomato_notif_1.mp3";
 import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
+import RiderOrderMap from "../components/RiderOrderMap";
 
 interface IRider {
   _id: string;
@@ -33,6 +33,7 @@ interface IRider {
 const RiderDashboard = () => {
   const { user } = useAppData();
   const socket = useSocket();
+  const audioUrl = new URL("../assets/zomato_notif_1.mp3", import.meta.url).href;
   
 
   const [profile, setProfile] = useState<IRider | null>(null);
@@ -46,13 +47,18 @@ const RiderDashboard = () => {
   const audioref = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioref.current = new Audio(audio);
-    audioref.current.preload = "auto";
+    return () => {
+      audioref.current?.pause();
+      audioref.current = null;
+    };
   }, []);
 
   const unlockAudio = async () => {
     try {
-      if(!audioref.current) return;
+      if (!audioref.current) {
+        audioref.current = new Audio(audioUrl);
+        audioref.current.preload = "auto";
+      }
       await audioref.current.play();
       audioref.current.pause();
       audioref.current.currentTime = 0;
@@ -377,7 +383,7 @@ const RiderDashboard = () => {
       </div>
       {!audioUnlock && (
       <div className="sticky top-4 z-30 mx-auto max-w-3xl px-4">
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-blue-100 p-4 shadow-sm">
 
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white text-xl shadow">
@@ -435,8 +441,11 @@ const RiderDashboard = () => {
     {
       currentOrder && <div className="mx-auto space-y-4 max-w-md px-4">
         <RiderCurrentOrder order={currentOrder} onStatusUpdate={fetchCurrentOrder}/>
+        <RiderOrderMap order={currentOrder} />
       </div>
+
     }
+    
     </div>
   );
 };

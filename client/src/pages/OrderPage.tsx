@@ -137,6 +137,14 @@ const OrderPage = () => {
         </div>
       </div>
 
+      {/* {
+        (order.status === "rider_assigned" || order.status === "picked_up") && 
+          (riderLocation ? (
+            <div> LOcation </div>
+          ) : (
+            <p>Waiting for rider location</p>
+          ))
+      } */}
       {/* {(order.status === "rider_assigned" || order.status === "picked_up") &&
         (riderLocation ? (
           <UserOrderMap
