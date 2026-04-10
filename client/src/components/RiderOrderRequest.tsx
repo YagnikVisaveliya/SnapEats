@@ -5,10 +5,70 @@ import toast from "react-hot-toast";
 interface Props{
     orderId: string;
     onAccepted: () => void;
+    acceptWindowSeconds?: number;
 }
-const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
+
+interface IncomingOrderPreview {
+    _id: string;
+    restaurantName: string;
+    totalAmount: number;
+    riderEarning: number;
+    distance: number;
+    deliveryAddress?: {
+        fromattedAddress?: string;
+    };
+}
+
+const RiderOrderRequest = ({ orderId, onAccepted, acceptWindowSeconds = 30 }: Props) => {
     const [accepting, setAccepting] = useState(false);
-    const [secondsLeft, setSecondsLeft] = useState(10);
+    const [secondsLeft, setSecondsLeft] = useState(acceptWindowSeconds);
+    const [orderPreview, setOrderPreview] = useState<IncomingOrderPreview | null>(null);
+    const [loadingPreview, setLoadingPreview] = useState(true);
+
+    useEffect(() => {
+        setSecondsLeft(acceptWindowSeconds);
+    }, [acceptWindowSeconds]);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const fetchOrderPreview = async () => {
+            setLoadingPreview(true);
+            try {
+                const { data } = await axios.get(
+                    `${import.meta.env.VITE_RIDER_SERVICE_URL}/api/rider/order/request/${orderId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                    },
+                );
+
+                if (mounted) {
+                    setOrderPreview(data?.order || null);
+                }
+            } catch (error: any) {
+                const statusCode = error?.response?.status;
+                if (statusCode === 404 || statusCode === 409) {
+                    onAccepted();
+                }
+
+                if (mounted) {
+                    setOrderPreview(null);
+                }
+            } finally {
+                if (mounted) {
+                    setLoadingPreview(false);
+                }
+            }
+        };
+
+        fetchOrderPreview();
+
+        return () => {
+            mounted = false;
+        };
+    }, [orderId, onAccepted]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -42,6 +102,21 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
             setAccepting(false);
         }
     }
+
+    const formatAmount = (value?: number) => {
+        if (typeof value !== "number" || Number.isNaN(value)) {
+            return "Rs 0";
+        }
+        return `Rs ${value.toFixed(2)}`;
+    };
+
+    const formatDistance = (distance?: number) => {
+        if (typeof distance !== "number" || Number.isNaN(distance)) {
+            return "0.00 km";
+        }
+        return `${distance.toFixed(2)} km`;
+    };
+
     return (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
 
@@ -56,7 +131,7 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
         </div>
 
         {/* Content */}
-        <div className="space-y-1">
+        <div className="space-y-2">
             <p className="text-sm font-semibold text-slate-900">
             New Delivery Request
             </p>
@@ -66,6 +141,33 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
                 {orderId.slice(-6)}
             </span>
             </p>
+
+            {loadingPreview ? (
+                <p className="text-xs text-slate-500">Loading order details...</p>
+            ) : (
+                <div className="rounded-xl bg-slate-50 p-3 space-y-1.5 text-xs text-slate-700">
+                    <p>
+                        <span className="font-semibold text-slate-900">Pickup Restaurant:</span>{" "}
+                        {orderPreview?.restaurantName || "Not available"}
+                    </p>
+                    <p>
+                        <span className="font-semibold text-slate-900">Order Total:</span>{" "}
+                        {formatAmount(orderPreview?.totalAmount)}
+                    </p>
+                    <p>
+                        <span className="font-semibold text-slate-900">Your Earning:</span>{" "}
+                        {formatAmount(orderPreview?.riderEarning)}
+                    </p>
+                    <p>
+                        <span className="font-semibold text-slate-900">Distance (Restaurant to Delivery):</span>{" "}
+                        {formatDistance(orderPreview?.distance)}
+                    </p>
+                    <p>
+                        <span className="font-semibold text-slate-900">Drop Address:</span>{" "}
+                        {orderPreview?.deliveryAddress?.fromattedAddress || "Not available"}
+                    </p>
+                </div>
+            )}
         </div>
 
         {/* Button */}

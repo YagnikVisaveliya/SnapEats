@@ -14,6 +14,8 @@ import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
 import RiderOrderMap from "../components/RiderOrderMap";
 
+const ORDER_ACCEPT_WINDOW_SECONDS = 30;
+
 interface IRider {
   _id: string;
   picture: string;
@@ -83,7 +85,7 @@ const RiderDashboard = () => {
 
       setTimeout(() => {
         setIncomingOrder((prev) => prev.filter((id) => id !== orderId));
-      }, 10000);
+      }, ORDER_ACCEPT_WINDOW_SECONDS * 1000);
     };
     socket.on("order:available", onNewOrder);
 
@@ -428,6 +430,7 @@ const RiderDashboard = () => {
             <RiderOrderRequest
               key={orderId}
               orderId={orderId}
+              acceptWindowSeconds={ORDER_ACCEPT_WINDOW_SECONDS}
               onAccepted={() => {
                 fetchProfile();
                 fetchCurrentOrder();

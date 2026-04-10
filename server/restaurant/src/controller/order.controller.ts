@@ -440,6 +440,54 @@ export const getCurrentOrdersForRider = async (req: Request, res: Response) => {
 
   res.json(order);
 };
+
+export const getOrderPreviewForRider = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({
+      message: "Forbidden",
+    });
+  }
+
+  const { orderId } = req.params;
+  if (!orderId) {
+    return res.status(400).json({
+      message: "Order id is required",
+    });
+  }
+
+  const order = await Order.findById(orderId).select(
+    "restaurantName totalAmount riderEarning distance deliveryAddress status riderId",
+  );
+
+  if (!order) {
+    return res.status(404).json({
+      message: "Order not found",
+    });
+  }
+
+  if (order.riderId) {
+    return res.status(409).json({
+      message: "Order already assigned",
+    });
+  }
+
+  if (order.status !== "ready_for_rider") {
+    return res.status(409).json({
+      message: "Order is no longer available for riders",
+    });
+  }
+
+  return res.json({
+    order: {
+      _id: order._id,
+      restaurantName: order.restaurantName,
+      totalAmount: order.totalAmount,
+      riderEarning: order.riderEarning,
+      distance: order.distance,
+      deliveryAddress: order.deliveryAddress,
+    },
+  });
+};
 export const updateOrderStatusByRider = async (req: Request, res: Response) => {
   if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
     return res.status(403).json({

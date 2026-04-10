@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrders, getCurrentOrdersForRider, getMyOrders, getSingleOrder, updateOrderStatus, updateOrderStatusByRider } from "../controller/order.controller.js";
+import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrders, getCurrentOrdersForRider, getMyOrders, getOrderPreviewForRider, getSingleOrder, updateOrderStatus, updateOrderStatusByRider } from "../controller/order.controller.js";
 import { isAuth, isSeller } from "../middleware/isAuth.middleware.js";
 import { updateStatusRestaurant } from "../controller/restaurant.controller.js";
 
@@ -15,6 +15,7 @@ router.route('/:id').get(isAuth,getSingleOrder)
 
 router.route('/assign/rider').put(assignRiderToOrder);
 router.route('/current/rider').get(getCurrentOrdersForRider);
+router.route('/rider/request/:orderId').get(getOrderPreviewForRider);
 router.route('/update-status/rider').put(updateOrderStatusByRider);
 
 

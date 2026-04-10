@@ -213,6 +213,43 @@ export const fetchMyCurrentOrders = async (req: AuthenticatedRequest, res: any) 
     }
 }
 
+export const getIncomingOrderPreview = async (req: AuthenticatedRequest, res: any) => {
+    const riderUserId = req.user?._id;
+    if (!riderUserId) {
+        return res.status(401).json({ message: "Please login" });
+    }
+
+    try {
+        const rider = await Rider.findOne({ userId: riderUserId, isVerified: true, isAvailable: true });
+        if (!rider) {
+            return res.status(404).json({ message: "Rider not found or not available" });
+        }
+
+        const { orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).json({ message: "Order id is required" });
+        }
+
+        const { data } = await axios.get(
+            `${process.env.RESTAURANT_SERVICE_URL}/api/order/rider/request/${orderId}`,
+            {
+                headers: {
+                    "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+                },
+            },
+        );
+
+        return res.json({ order: data?.order ?? null });
+    } catch (error: any) {
+        const upstreamStatus = error?.response?.status;
+        const upstreamMessage = error?.response?.data?.message;
+
+        return res
+            .status(typeof upstreamStatus === "number" ? upstreamStatus : 500)
+            .json({ message: upstreamMessage || "Failed to fetch order preview" });
+    }
+}
+
 export const updateOrderStatus = async (req: AuthenticatedRequest, res: any) => {
     const userId = req.user?._id;
     if(!userId) {
