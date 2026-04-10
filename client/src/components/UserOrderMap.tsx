@@ -85,7 +85,7 @@ const UserOrderMap = ({ riderLocation, deliveryLocation }: Props) => {
       <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
         <div>
           <p className="text-sm font-semibold text-slate-900">Live Rider Tracking</p>
-          <p className="text-xs text-slate-500">Clean route view without turn-by-turn overlay</p>
+          {/* <p className="text-xs text-slate-500">Clean route view without turn-by-turn overlay</p> */}
         </div>
         <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Live</span>
       </div>

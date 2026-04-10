@@ -42,16 +42,46 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
             setAccepting(false);
         }
     }
-  return (
-    <div className="rounded-xl bg-white p-4 shadow-sm border border-green-300 space-y-3 ">
-        <p className="text-center text-xs font-semibold text-red-600">Accept within {secondsLeft} seconds</p>
-        <p className="text-center text-xs font-semibold text-green-600">New Delivery Request</p>
-        <p className="text-xs text-gray-500">Order ID: <b>{orderId.slice(-6)}</b></p>
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
 
-        <button disabled={accepting} onClick={acceptOrder} className="width-full rounded-lg bg-green-600 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50">{
-            accepting ? "Accepting..." : "Accept Order"    
-        }</button>
-    </div>
+        {/* Top Row */}
+        <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Delivery Request
+            </p>
+            <span className="text-xs font-semibold text-red-500 animate-pulse">
+            {secondsLeft}s
+            </span>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-1">
+            <p className="text-sm font-semibold text-slate-900">
+            New Delivery Request
+            </p>
+            <p className="text-xs text-slate-500">
+            Order ID:{" "}
+            <span className="font-medium text-slate-700">
+                {orderId.slice(-6)}
+            </span>
+            </p>
+        </div>
+
+        {/* Button */}
+        <button
+            disabled={accepting}
+            onClick={acceptOrder}
+            className={`w-full rounded-xl py-2.5 text-sm font-semibold text-white transition ${
+            accepting
+                ? "bg-slate-400 cursor-not-allowed"
+                : "bg-[#e23744] hover:bg-[#c92f3c]"
+            }`}
+        >
+            {accepting ? "Accepting..." : "Accept Order"}
+        </button>
+
+        </div>
   )
 }
 
