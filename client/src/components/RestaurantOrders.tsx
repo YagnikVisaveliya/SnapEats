@@ -22,6 +22,8 @@ const RestaurantOrders = ({ restaurantId }: { restaurantId: string }) => {
   const socket = useSocket();
   const audioref = useRef<HTMLAudioElement | null>(null);
 
+  const [activeTab, setActiveTab] = useState<"ACTIVE" | "COMPLETED">("ACTIVE");
+
   useEffect(() => {
     audioref.current = new Audio(audio);
     audioref.current.load();
@@ -119,11 +121,11 @@ const RestaurantOrders = ({ restaurantId }: { restaurantId: string }) => {
   return (
     <div className="space-y-6">
       {!audioUnlock && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🔔</span>
             <div>
-              <p className="font-medium text-blue-900">
+              <p className="font-semibold text-blue-900">
                 Enable Sound Notification
               </p>
               <p className="text-sm text-blue-700">
@@ -134,49 +136,72 @@ const RestaurantOrders = ({ restaurantId }: { restaurantId: string }) => {
 
           <button
             onClick={unlockAudio}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition active:scale-95"
           >
             Enable sound
           </button>
         </div>
       )}
 
-      {/* Active orders */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Active Orders</h3>
-
-        {activeOrders.length === 0 ? (
-          <p className="text-sm text-gray-500">No Acitve orders</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeOrders.map((order) => (
-              <OrderCard
-                key={order._id}
-                order={order}
-                onStatusUpdate={fetchOrders}
-              />
-            ))}
-          </div>
-        )}
+      {/* Tabs */}
+      <div className="flex items-center gap-4 border-b border-gray-200 pb-px">
+        <button
+          onClick={() => setActiveTab("ACTIVE")}
+          className={`pb-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+            activeTab === "ACTIVE"
+              ? "border-b-2 border-red-500 text-red-600"
+              : "text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          Active Orders
+        </button>
+        <button
+          onClick={() => setActiveTab("COMPLETED")}
+          className={`pb-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+            activeTab === "COMPLETED"
+              ? "border-b-2 border-red-500 text-red-600"
+              : "text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          Completed Orders
+        </button>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Completed Orders</h3>
+      {activeTab === "ACTIVE" && (
+        <div className="space-y-4">
+          {activeOrders.length === 0 ? (
+            <p className="text-sm text-gray-500">No Active orders</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeOrders.map((order) => (
+                <OrderCard
+                  key={order._id}
+                  order={order}
+                  onStatusUpdate={fetchOrders}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-        {completedOrders.length === 0 ? (
-          <p className="text-sm text-gray-500">No completed orders</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {completedOrders.map((order) => (
-              <OrderCard
-                key={order._id}
-                order={order}
-                onStatusUpdate={fetchOrders}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {activeTab === "COMPLETED" && (
+        <div className="space-y-4">
+          {completedOrders.length === 0 ? (
+            <p className="text-sm text-gray-500">No completed orders</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {completedOrders.map((order) => (
+                <OrderCard
+                  key={order._id}
+                  order={order}
+                  onStatusUpdate={fetchOrders}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
