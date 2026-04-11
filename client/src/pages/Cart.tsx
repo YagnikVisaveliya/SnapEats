@@ -6,17 +6,22 @@ import toast from 'react-hot-toast';
 import type { ICart, IMenuItem } from '../types';
 import { BiMinus, BiPlus, BiTrash } from 'react-icons/bi';
 
+const isMenuItem = (value: unknown): value is IMenuItem => {
+    return !!value && typeof value === 'object' && 'isAvailable' in value && '_id' in value;
+};
+
 const Cart = () => {
     const {cart, totalPrice, quantity, fetchCart, } = useAppData();
     const navigate = useNavigate();
 
     const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
     const [clearingCart, setClearingCart] = useState(false);
+    const [checkingCheckout, setCheckingCheckout] = useState(false);
     const hasCartItems = !!cart && cart.length > 0;
     const restaurant = hasCartItems ? (cart[0].restaurantId as any) : null;
     const hasUnavailableItems = hasCartItems && cart.some((cartItem: ICart) => {
-        if (typeof cartItem.itemId === 'string') return true;
-        const item = cartItem.itemId as IMenuItem;
+        if (!isMenuItem(cartItem.itemId)) return true;
+        const item = cartItem.itemId;
         return !item.isAvailable;
     });
 
@@ -53,7 +58,7 @@ const Cart = () => {
         }
     }, []);
 
-    const distance = hasCartItems && userLat && userLng ? getDistanceKm(
+    const distance = hasCartItems && userLat !== null && userLng !== null ? getDistanceKm(
         userLat,
         userLng,
         resLat,
@@ -122,12 +127,36 @@ const Cart = () => {
         }
     }
 
-    const checkOut = () =>{
-        if (hasUnavailableItems) {
-            // toast.error("Please remove unavailable items before checkout");
-            return;
+    const checkOut = async () =>{
+        if (checkingCheckout) return;
+
+        try {
+            setCheckingCheckout(true);
+            const { data } = await axios.get(`${import.meta.env.VITE_RESTAURANT_SERVICE_URL}/api/cart/myCart`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            const latestCart: ICart[] = Array.isArray(data?.cart) ? data.cart : [];
+            const hasUnavailableInLatestCart = latestCart.some((cartItem: ICart) => {
+                if (!isMenuItem(cartItem.itemId)) return true;
+                return !cartItem.itemId.isAvailable;
+            });
+
+            await fetchCart();
+
+            if (hasUnavailableInLatestCart) {
+                toast.error("Some items are unavailable. Please remove them before checkout.");
+                return;
+            }
+
+            navigate("/checkout");
+        } catch (error) {
+            toast.error("Unable to verify cart right now. Please try again.");
+        } finally {
+            setCheckingCheckout(false);
         }
-        navigate("/checkout");
     }
 
     if(!hasCartItems || !restaurant) {
@@ -147,7 +176,7 @@ const Cart = () => {
 
         <div className='space-y-4'>
             {cart.map((cartItem: ICart) => {
-                const item = typeof cartItem.itemId === 'string' ? null : (cartItem.itemId as IMenuItem);
+                const item = isMenuItem(cartItem.itemId) ? cartItem.itemId : null;
                 const isUnavailable = !item || !item.isAvailable;
                 const isLoading = !!item && loadingItemId === item._id;
 
@@ -210,8 +239,8 @@ const Cart = () => {
             {hasUnavailableItems && (
                 <p className='text-xs text-red-500'>Remove unavailable items to proceed with checkout.</p>
             )}
-            <button onClick={checkOut} className={`mt-3 w-full rounded-lg bg-red-600 py-3 text-sm font-semibold text-white hover:bg-red-700 ${restaurant.isOpen && !hasUnavailableItems ? "" : "cursor-not-allowed opacity-50"}`} disabled={!restaurant.isOpen || hasUnavailableItems} >
-                {!restaurant.isOpen ? "Restaurant Closed" : hasUnavailableItems ? "Unavailable items in cart" : "Proceed to Checkout"}
+            <button onClick={checkOut} className={`mt-3 w-full rounded-lg bg-red-600 py-3 text-sm font-semibold text-white hover:bg-red-700 ${restaurant.isOpen ? "" : "cursor-not-allowed opacity-50"}`} disabled={!restaurant.isOpen || checkingCheckout} >
+                {!restaurant.isOpen ? "Restaurant Closed" : checkingCheckout ? "Checking availability..." : hasUnavailableItems ? "Unavailable items in cart" : "Proceed to Checkout"}
             </button>
             <button onClick={clearCart} disabled={clearingCart} className='mt-3 w-full rounded-lg bg-gray-500 py-3 text-sm font-semibold text-white hover:bg-gray-600 flex justify-center items-center gap-1' >
                 Clear Cart<BiTrash size={16}/>
