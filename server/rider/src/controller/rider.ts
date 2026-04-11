@@ -250,6 +250,49 @@ export const getIncomingOrderPreview = async (req: AuthenticatedRequest, res: an
     }
 }
 
+export const getDeliveredOrdersAnalytics = async (req: AuthenticatedRequest, res: any) => {
+    const riderUserId = req.user?._id;
+    if (!riderUserId) {
+        return res.status(401).json({ message: "Please login" });
+    }
+
+    try {
+        const rider = await Rider.findOne({ userId: riderUserId, isVerified: true });
+        if (!rider) {
+            return res.status(404).json({ message: "Rider not found" });
+        }
+
+        const range = (req.query?.range as string | undefined) || "week";
+
+        const { data } = await axios.get(
+            `${process.env.RESTAURANT_SERVICE_URL}/api/order/rider/delivered?riderId=${rider._id}&range=${range}`,
+            {
+                headers: {
+                    "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+                },
+            },
+        );
+
+        return res.json({
+            filter: data?.filter || range,
+            summary: data?.summary || {
+                totalDelivered: 0,
+                totalEarning: 0,
+                totalDistance: 0,
+                averageEarning: 0,
+            },
+            orders: data?.orders || [],
+        });
+    } catch (error: any) {
+        const upstreamStatus = error?.response?.status;
+        const upstreamMessage = error?.response?.data?.message;
+
+        return res
+            .status(typeof upstreamStatus === "number" ? upstreamStatus : 500)
+            .json({ message: upstreamMessage || "Failed to fetch delivered order analytics" });
+    }
+}
+
 export const updateOrderStatus = async (req: AuthenticatedRequest, res: any) => {
     const userId = req.user?._id;
     if(!userId) {

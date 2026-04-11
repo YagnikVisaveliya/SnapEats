@@ -488,6 +488,68 @@ export const getOrderPreviewForRider = async (req: Request, res: Response) => {
     },
   });
 };
+
+export const getDeliveredOrdersForRider = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({
+      message: "Forbidden",
+    });
+  }
+
+  const riderId = (req.query?.riderId as string | undefined)?.trim();
+  const range = (req.query?.range as string | undefined)?.trim() || "week";
+
+  if (!riderId) {
+    return res.status(400).json({
+      message: "Rider id is required",
+    });
+  }
+
+  const now = new Date();
+  let startDate: Date | null = null;
+
+  if (range === "day") {
+    startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  } else if (range === "week") {
+    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  } else if (range === "month") {
+    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  } else if (range !== "all") {
+    return res.status(400).json({
+      message: "Invalid range. Use day, week, month, or all",
+    });
+  }
+
+  const query: any = {
+    riderId,
+    status: "delivered",
+    paymentStatus: "paid",
+  };
+
+  if (startDate) {
+    query.updatedAt = { $gte: startDate };
+  }
+
+  const orders = await Order.find(query)
+    .sort({ updatedAt: -1 })
+    .select(
+      "_id restaurantName totalAmount riderEarning distance deliveryAddress status updatedAt createdAt",
+    );
+
+  const totalEarning = orders.reduce((sum, order) => sum + (order.riderEarning || 0), 0);
+  const totalDistance = orders.reduce((sum, order) => sum + (order.distance || 0), 0);
+
+  return res.json({
+    filter: range,
+    summary: {
+      totalDelivered: orders.length,
+      totalEarning,
+      totalDistance: Number(totalDistance.toFixed(2)),
+      averageEarning: orders.length ? Number((totalEarning / orders.length).toFixed(2)) : 0,
+    },
+    orders,
+  });
+};
 export const updateOrderStatusByRider = async (req: Request, res: Response) => {
   if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
     return res.status(403).json({

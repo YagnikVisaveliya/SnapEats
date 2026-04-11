@@ -13,6 +13,7 @@ import type { IOrder } from "../types";
 import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
 import RiderOrderMap from "../components/RiderOrderMap";
+import RiderHistory from "../components/RiderHistory";
 
 const ORDER_ACCEPT_WINDOW_SECONDS = 30;
 
@@ -41,6 +42,7 @@ const RiderDashboard = () => {
   const [profile, setProfile] = useState<IRider | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY">("ACTIVE");
 
   const [incommingOrder, setIncomingOrder] = useState<string[]>([]);
   const [currentOrder, setCurrentOrder] = useState<IOrder | null>(null);
@@ -363,92 +365,127 @@ const RiderDashboard = () => {
 
         </section>
 
-        <section className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700 shadow-sm">
-          Please be within a 500m radius of a restaurant hotspot before going online to receive orders.
-        </section>
-
-        {profile.isVerified && !currentOrder && (
+        {/* Tab Navigation */}
+        <div className="mt-8 flex items-center gap-4 border-b border-slate-200 pb-px">
           <button
-            onClick={toggleAvailiblity}
-            disabled={toggling}
-            className={`w-full rounded-xl py-3 text-sm font-semibold text-white transition ${
-              toggling
-                ? "cursor-not-allowed bg-gray-400"
-                : profile.isAvailable
-                ? "bg-slate-700 hover:bg-slate-800"
-                : "bg-[#e23744] hover:bg-[#c92f3c]"
+            onClick={() => setActiveTab("ACTIVE")}
+            className={`pb-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+              activeTab === "ACTIVE"
+                ? "border-b-2 border-red-500 text-red-600"
+                : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            {toggling ? "Updating..." : profile.isAvailable ? "Go Offline" : "Go Online"}
+            Active
           </button>
+          <button
+            onClick={() => setActiveTab("HISTORY")}
+            className={`pb-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+              activeTab === "HISTORY"
+                ? "border-b-2 border-red-500 text-red-600"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            History
+          </button>
+        </div>
+
+        {activeTab === "ACTIVE" && (
+          <div className="space-y-5 pt-5">
+            <section className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700 shadow-sm">
+              Please be within a 500m radius of a restaurant hotspot before going online to receive orders.
+            </section>
+
+            {profile.isVerified && !currentOrder && (
+              <button
+                onClick={toggleAvailiblity}
+                disabled={toggling}
+                className={`w-full rounded-xl py-3 text-sm font-semibold text-white transition ${
+                  toggling
+                    ? "cursor-not-allowed bg-gray-400"
+                    : profile.isAvailable
+                    ? "bg-slate-700 hover:bg-slate-800"
+                    : "bg-[#e23744] hover:bg-[#c92f3c]"
+                }`}
+              >
+                {toggling ? "Updating..." : profile.isAvailable ? "Go Offline" : "Go Online"}
+              </button>
+            )}
+
+            {!audioUnlock && (
+            <div className="sticky top-4 z-30 mx-auto max-w-3xl">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-blue-100 p-4 shadow-sm">
+
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white text-xl shadow">
+                    🔔
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-blue-900">
+                      Enable Sound Notifications
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      So you never miss a new delivery request
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={unlockAudio}
+                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 active:scale-95 transition"
+                >
+                  Enable Sound
+                </button>
+
+              </div>
+            </div>
+            )}
+            
+            {profile.isAvailable && incommingOrder.length > 0 && (
+              <div className="mx-auto mt-6 max-w-md">
+
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                    Incoming Orders
+                  </h3>
+
+                  <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+                    {incommingOrder.length} New
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {incommingOrder.map((orderId) => (
+                    <RiderOrderRequest
+                      key={orderId}
+                      orderId={orderId}
+                      acceptWindowSeconds={ORDER_ACCEPT_WINDOW_SECONDS}
+                      onAccepted={() => {
+                        fetchProfile();
+                        fetchCurrentOrder();
+                      }}
+                    />
+                  ))}
+                </div>
+
+              </div>
+            )}
+            
+            {currentOrder && (
+              <div className="mx-auto space-y-4 max-w-md">
+                <RiderCurrentOrder order={currentOrder} onStatusUpdate={fetchCurrentOrder}/>
+                <RiderOrderMap order={currentOrder} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "HISTORY" && (
+          <div className="pt-5">
+            <RiderHistory />
+          </div>
         )}
       </div>
-      {!audioUnlock && (
-      <div className="sticky top-4 z-30 mx-auto max-w-3xl px-4">
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-blue-100 p-4 shadow-sm">
-
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white text-xl shadow">
-              🔔
-            </div>
-
-            <div>
-              <p className="font-semibold text-blue-900">
-                Enable Sound Notifications
-              </p>
-              <p className="text-sm text-blue-700">
-                So you never miss a new delivery request
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={unlockAudio}
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 active:scale-95 transition"
-          >
-            Enable Sound
-          </button>
-
-        </div>
-      </div>
-    )}
-    {profile.isAvailable && incommingOrder.length > 0 && (
-      <div className="mx-auto mt-6 max-w-md px-4">
-
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-            Incoming Orders
-          </h3>
-
-          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
-            {incommingOrder.length} New
-          </span>
-        </div>
-
-        <div className="space-y-4">
-          {incommingOrder.map((orderId) => (
-            <RiderOrderRequest
-              key={orderId}
-              orderId={orderId}
-              acceptWindowSeconds={ORDER_ACCEPT_WINDOW_SECONDS}
-              onAccepted={() => {
-                fetchProfile();
-                fetchCurrentOrder();
-              }}
-            />
-          ))}
-        </div>
-
-      </div>
-    )}
-    {
-      currentOrder && <div className="mx-auto space-y-4 max-w-md px-4">
-        <RiderCurrentOrder order={currentOrder} onStatusUpdate={fetchCurrentOrder}/>
-        <RiderOrderMap order={currentOrder} />
-      </div>
-
-    }
-    
     </div>
   );
 };
