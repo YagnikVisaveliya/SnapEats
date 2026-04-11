@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrders, getCurrentOrdersForRider, getDeliveredOrdersForRider, getMyOrders, getOrderPreviewForRider, getSingleOrder, updateOrderStatus, updateOrderStatusByRider } from "../controller/order.controller.js";
+import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrders, getCurrentOrdersForRider, getDeliveredOrdersForRider, getMyOrders, getOrderPreviewForRider, getSingleOrder, updateOrderStatus, updateOrderStatusByRider, getRestaurantSalesAnalytics } from "../controller/order.controller.js";
 import { isAuth, isSeller } from "../middleware/isAuth.middleware.js";
 import { updateStatusRestaurant } from "../controller/restaurant.controller.js";
 
@@ -10,6 +10,7 @@ router.route('/new').post(isAuth,createOrder);
 router.route('/payment/:id').get(fetchOrderForPayment)
 router.route('/my').get(isAuth,getMyOrders)
 router.route('/restaurant/:restaurantId').get(isAuth,isSeller,fetchRestaurantOrders)
+router.route('/restaurant/:restaurantId/sales').get(isAuth,isSeller,getRestaurantSalesAnalytics)
 router.route('/:orderId').put(isAuth,isSeller,updateOrderStatus)
 router.route('/:id').get(isAuth,getSingleOrder)
 

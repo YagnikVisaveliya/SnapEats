@@ -6,6 +6,7 @@ import RestaurantProfile from "../components/RestaurantProfile";
 import MenuItems from "../components/MenuItems";
 import AddManuItems from "../components/AddManuItems";
 import RestaurantOrders from "../components/RestaurantOrders";
+import { RestaurantSales } from "../components/RestaurantSales";
 
 type SellerTab = "menu" | "add-item" | "sales";
 
@@ -107,7 +108,8 @@ function Restaurant() {
             onItemAdded={() => fetchMenuItems(restaurant._id)} />
             // <p>Add Menu Item Page</p>
           )}
-          {tab === "sales" && <p>Sales Page</p>}
+          {/* //hear add Sales page */}
+          {tab === "sales" && <RestaurantSales restaurantId={restaurant._id} />} 
         </div>
       </div>
     </div>

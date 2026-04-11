@@ -654,3 +654,104 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
     message: `Cannot update order from status ${order.status}`,
   });
 };
+
+export const getRestaurantSalesAnalytics = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { restaurantId } = req.params;
+    if (!restaurantId) {
+      return res.status(400).json({ message: "Restaurant ID is required" });
+    }
+
+    const range = (req.query?.range as string | undefined)?.trim() || "week";
+
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant || restaurant.ownerId.toString() !== user._id.toString()) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const now = new Date();
+    let startDate: Date | null = null;
+
+    if (range === "day") {
+      startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    } else if (range === "week") {
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else if (range === "month") {
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    } else if (range !== "all") {
+      return res.status(400).json({
+        message: "Invalid range. Use day, week, month, or all",
+      });
+    }
+
+    const query: any = {
+      restaurantId,
+      status: "delivered",
+      paymentStatus: "paid",
+    };
+
+    if (startDate) {
+      query.updatedAt = { $gte: startDate };
+    }
+
+    const orders = await Order.find(query).select("totalAmount deliveryCharge items updatedAt");
+
+    const totalRevenue = orders.reduce((sum, order) => {
+      // Restaurant revenue is typically subtotal, but we'll use totalAmount without delivery/platform charge if possible
+      // Using totalAmount for simplicity as requested "total sales amount"
+      return sum + (order.totalAmount || 0);
+    }, 0);
+
+    // Grouping by Date for timeSeries (Chart)
+    const timeSeriesMap: Record<string, number> = {};
+    const itemMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
+
+    orders.forEach((order) => {
+      // TimeSeries grouping
+      const dateStr = order.updatedAt.toISOString().split("T")[0] as string; // YYYY-MM-DD
+      timeSeriesMap[dateStr] = (timeSeriesMap[dateStr] || 0) + order.totalAmount;
+
+      // Itemwise totals
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item) => {
+          if (!itemMap[item.itemId]) {
+            itemMap[item.itemId] = { name: item.name, quantity: 0, revenue: 0 };
+          }
+          itemMap[item.itemId]!.quantity += item.quantity || 0;
+          itemMap[item.itemId]!.revenue += (item.price || 0) * (item.quantity || 0);
+        });
+      }
+    });
+
+    // Format timeseries for chart
+    const timeSeriesData = Object.entries(timeSeriesMap)
+      .map(([date, revenue]) => ({ date, revenue }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Format itemwise data
+    const itemWiseData = Object.values(itemMap)
+      .sort((a, b) => b.revenue - a.revenue); // Sort by highest revenue
+
+    return res.json({
+      success: true,
+      filter: range,
+      summary: {
+        totalOrders: orders.length,
+        totalRevenue: Number(totalRevenue.toFixed(2)),
+      },
+      timeSeriesData,
+      itemWiseData,
+    });
+  } catch (error) {
+    console.error("Error fetching restaurant sales analytics:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
