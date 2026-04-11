@@ -104,6 +104,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   const [longitude, latitude] = address.location.coordinates;
 
   const riderEarning = Math.ceil(distance) * 17;
+  const otp = Math.floor(100000 + Math.random() * 900000);
 
   const order = await Order.create({
     userId: user._id.toString(),
@@ -129,6 +130,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     paymentStatus: "pending",
     status: "placed",
     expireAt,
+    otp,
   });
 
   await Cart.deleteMany({ userId: user._id });
@@ -430,7 +432,7 @@ export const getCurrentOrdersForRider = async (req: Request, res: Response) => {
   const order = await Order.findOne({
     riderId,
     status: { $ne: "delivered" },
-  }).populate("restaurantId");
+  }).select("-otp").populate("restaurantId");
 
   if (!order) {
     return res.status(404).json({
@@ -614,6 +616,14 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
   }
 
   if (order.status === "picked_up"){
+    const reqOtp = Number(req.body?.otp) || Number(req.query?.otp);
+
+    if (!reqOtp || reqOtp !== order.otp) {
+      return res.status(400).json({
+        message: "Invalid or missing OTP",
+      });
+    }
+
     order.status = "delivered";
     await order.save();
 

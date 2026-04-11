@@ -95,6 +95,21 @@ const OrderPage = () => {
           </span>
         </div>
 
+        {/* Delivery OTP */}
+        {order.otp && (order.status === "picked_up") && (
+          <div className="bg-gradient-to-r from-red-50 to-rose-100 rounded-xl shadow-sm border border-rose-200 p-5 text-center">
+            <h2 className="font-bold text-rose-800 mb-1">Delivery PIN</h2>
+            <p className="text-sm text-rose-600 mb-3">Provide this code to your rider to receive your order</p>
+            <div className="flex justify-center gap-2">
+              {String(order.otp).split('').map((digit, idx) => (
+                <div key={idx} className="w-10 h-12 flex items-center justify-center bg-white rounded-lg border border-rose-200 text-xl font-black text-rose-700 shadow-sm">
+                  {digit}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Items */}
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <h2 className="font-semibold text-gray-800 mb-3">Items</h2>

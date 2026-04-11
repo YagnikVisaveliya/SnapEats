@@ -310,7 +310,7 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: any) => 
         try {
             const { data } = await axios.put(`${process.env.RESTAURANT_SERVICE_URL}/api/order/update-status/rider`, {
                 orderId,
-
+                otp: req.body.otp, // Forward OTP for delivery verification
             }, {
                 headers: {
                     "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",

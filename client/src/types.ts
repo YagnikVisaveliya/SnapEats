@@ -93,6 +93,7 @@ export interface IOrder {
   deliveryCharge: number;
   platformCharge: number;
   totalAmount: number;
+  otp?: number;
 
   addressId: string;
 
