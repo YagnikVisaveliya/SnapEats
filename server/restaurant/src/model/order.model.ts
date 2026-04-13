@@ -2,6 +2,7 @@ import mongoose, {Schema, Document} from "mongoose";
 
 export interface IOrder extends Document {
     userId: string;
+    userEmail: string;
     restaurantId: string;
     restaurantName: string;
     riderId?: string;
@@ -53,6 +54,10 @@ export interface IOrder extends Document {
 
 export const orderSchema: Schema = new Schema({
     userId: {
+        type: String,
+        required: true,
+    },
+    userEmail: {
         type: String,
         required: true,
     },

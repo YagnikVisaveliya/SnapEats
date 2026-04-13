@@ -18,6 +18,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  next();
+});
 
 import restaurantRoutes from './router/restaurant.route.js';
 import manuItemRoutes from './router/manuItem.route.js';

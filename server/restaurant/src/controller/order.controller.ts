@@ -108,6 +108,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
 
   const order = await Order.create({
     userId: user._id.toString(),
+    userEmail: user.email,
     restaurantId: restaurantId.toString(),
     restaurantName: restaurant.name,
     riderId: null,
