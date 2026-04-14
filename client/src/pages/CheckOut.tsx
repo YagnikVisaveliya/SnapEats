@@ -388,7 +388,7 @@ const CheckOut = () => {
                 onClick={payWithStripe}
                 className="w-full rounded-lg bg-gray-600 py-3 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loadingRazorpay ? (
+                {loadingStripe ? (
                   <BiLoader size={18} className="animate-spin" />
                 ) : (
                   <BiCreditCard size={18} />

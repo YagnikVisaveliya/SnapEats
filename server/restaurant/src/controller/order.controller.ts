@@ -143,6 +143,108 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   });
 };
 
+export const cancelOrder = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.userId.toString() !== user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const ALLOWED_CANCELLATION_STATUSES = ["placed", "accepted"];
+    if (!ALLOWED_CANCELLATION_STATUSES.includes(order.status)) {
+      return res.status(400).json({
+        message: `Order cannot be cancelled at status: ${order.status}`,
+      });
+    }
+
+    // Update order status
+    order.status = "cancelled";
+    order.paymentStatus = "refunded";
+    await order.save();
+
+    // Trigger Refund to Wallet
+    try {
+      await axios.post(
+        `${process.env.WALLET_SERVICE_URL}/api/wallet/internal/refund`,
+        {
+          userId: order.userId,
+          amount: order.totalAmount,
+          orderId: order._id,
+          description: `Refund for cancelled order #${order._id}`,
+        },
+        {
+          headers: {
+            "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+          },
+        }
+      );
+    } catch (refundError) {
+      console.error("Failed to trigger automated refund:", refundError);
+      // We still cancelled the order, but refund might need manual intervention or retry
+    }
+
+    // Notify Restaurant
+    try {
+      await axios.post(
+        `${process.env.REALTIME_SERVICE_URL}/api/v1/internal/emit`,
+        {
+          event: "order:cancelled",
+          room: `restaurant:${order.restaurantId}`,
+          payload: {
+            orderId: order._id.toString(),
+            message: "An order has been cancelled by the user",
+          },
+        },
+        {
+          headers: {
+            "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+          },
+        }
+      );
+    } catch (notifyError) {
+      console.error("Failed to notify restaurant about cancellation:", notifyError);
+    }
+
+    // Notify User via Socket
+    try {
+      await axios.post(
+        `${process.env.REALTIME_SERVICE_URL}/api/v1/internal/emit`,
+        {
+          event: "order:status_updated",
+          room: `user:${order.userId}`,
+          payload: {
+            orderId: order._id.toString(),
+            status: "cancelled",
+          },
+        },
+        {
+          headers: {
+            "x-internal-key": process.env.INTERNAL_SERVICE_KEY || "",
+          },
+        }
+      );
+    } catch (notifyUserError) {
+       console.error("Failed to notify user about cancellation:", notifyUserError);
+    }
+
+    res.json({ message: "Order cancelled successfully and refund initiated to wallet", order });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const fetchOrderForPayment = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -627,6 +729,32 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
 
     order.status = "delivered";
     await order.save();
+
+    // Loyalty Reward Trigger: Every 5 orders
+    try {
+      const deliveredCount = await Order.countDocuments({
+        userId: order.userId,
+        status: "delivered",
+      });
+
+      if (deliveredCount > 0 && deliveredCount % 5 === 0) {
+        await axios.post(
+          `${process.env.WALLET_SERVICE_URL}/api/wallet/internal/loyalty-bonus`,
+          {
+            userId: order.userId,
+            userEmail: order.userEmail,
+            orderCount: deliveredCount,
+          },
+          {
+            headers: {
+              "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+          }
+        );
+      }
+    } catch (loyaltyError) {
+      console.error("Failed to trigger loyalty reward:", loyaltyError);
+    }
 
     await axios.post(
       `${process.env.REALTIME_SERVICE_URL}/api/v1/internal/emit`,

@@ -1,8 +1,10 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import { useEffect, useState } from "react";
 import type { IOrder } from "../types";
 import axios from "axios";
+import toast from "react-hot-toast";
+import { BiX } from "react-icons/bi";
 import UserOrderMap from "../components/UserOrderMap";
 
 const OrderPage = () => {
@@ -11,6 +13,8 @@ const OrderPage = () => {
 
   const [order, setOrder] = useState<IOrder | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const fetchOrder = async () => {
     try {
@@ -28,6 +32,28 @@ const OrderPage = () => {
       console.log("Error fetching order details:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cancelOrder = async () => {
+    try {
+      setCancelling(true);
+      await axios.put(
+        `${import.meta.env.VITE_RESTAURANT_SERVICE_URL}/api/order/${id}/cancel`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+      toast.success("Order cancelled successfully! Refund initiated to wallet.");
+      setShowCancelConfirm(false);
+      await fetchOrder();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to cancel order");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -146,6 +172,18 @@ const OrderPage = () => {
           </p>
         </div>
 
+        {/* Cancel Order Button */}
+        {(order.status === "placed" || order.status === "accepted") && (
+          <button
+            onClick={() => setShowCancelConfirm(true)}
+            disabled={cancelling}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-semibold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <BiX size={18} />
+            Cancel Order
+          </button>
+        )}
+
         {/* Payment Summary */}
         <div className="bg-white rounded-xl shadow-sm border p-4 space-y-2">
           <h2 className="font-semibold text-gray-800 mb-2">Payment Summary</h2>
@@ -189,6 +227,35 @@ const OrderPage = () => {
         ) : (
           <p>Waiting for rider location</p>
         ))}
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4">
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Cancel Order?</h2>
+            <p className="text-gray-600 text-sm mb-6">
+              Are you sure you want to cancel this order? The full amount will be refunded to your wallet.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                disabled={cancelling}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
+              >
+                Keep Order
+              </button>
+              <button
+                onClick={cancelOrder}
+                disabled={cancelling}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition disabled:opacity-50"
+              >
+                {cancelling ? "Cancelling..." : <><BiX size={18} /> Cancel Order</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppContext";
 import toast from "react-hot-toast";
-import { BiLogOut, BiMapPin, BiPackage } from "react-icons/bi";
+import { BiLogOut, BiMapPin, BiPackage, BiWallet } from "react-icons/bi";
 
 
 function Account() {
@@ -35,6 +35,13 @@ function Account() {
           >
             <BiPackage className="h-5 w-5 text-red-500" />
             <span className="font-medium">Your Orders</span>
+          </div>
+          <div
+            className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
+            onClick={() => navigate("/wallet")}
+          >
+            <BiWallet className="h-5 w-5 text-red-500" />
+            <span className="font-medium">Wallet</span>
           </div>
           <div
             className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"

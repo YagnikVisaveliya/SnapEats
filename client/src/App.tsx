@@ -17,6 +17,7 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import OrderSuccess from './pages/OrderSuccess';
 import Orders from './pages/Orders';
 import OrderPage from './pages/OrderPage';
+import Wallet from './pages/Wallet';
 import RiderDashboard from './pages/RiderDashboard';
 import Admin from './pages/Admin';
 
@@ -56,6 +57,7 @@ const App = () => {
             <Route path='/order/:id' element={<OrderPage/>}/>
             <Route path='/paymentsuccess/:paymentId' element={<PaymentSuccess/>}/>
             <Route path='/order-success' element={<OrderSuccess/>}/>
+            <Route path='/wallet' element={<Wallet/>}/>
 
           </Route>
         </Routes>
