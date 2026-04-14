@@ -69,6 +69,8 @@ const OrderCard = ({ order, onStatusUpdate }: props) => {
     }
   };
 
+  const totalrestaurantEarnings = order.subTotal - order.subTotal * 0.10;
+
   return <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
       <div className="flex justify-between items-center">
         <p className="text-sm font-medium">Order #{order._id.slice(-6)}</p>
@@ -92,7 +94,7 @@ const OrderCard = ({ order, onStatusUpdate }: props) => {
 
       <div className="flex justify-between text-sm font-medium">
         <span>Total</span>
-        <span>₹{order.totalAmount}</span>
+        <span>₹{totalrestaurantEarnings.toFixed(2)}</span>
       </div>
 
       <p className="text-xs text-gray-400">Payment: {order.paymentStatus}</p>

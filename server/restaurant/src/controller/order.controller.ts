@@ -841,22 +841,25 @@ export const getRestaurantSalesAnalytics = async (
       query.updatedAt = { $gte: startDate };
     }
 
-    const orders = await Order.find(query).select("totalAmount deliveryCharge items updatedAt");
+    const orders = await Order.find(query).select("totalAmount subTotal deliveryCharge items updatedAt");
+
+    const PLATFORM_CUT_PERCENT = 10;
+    const restaurantShareRatio = (100 - PLATFORM_CUT_PERCENT) / 100;
 
     const totalRevenue = orders.reduce((sum, order) => {
-      // Restaurant revenue is typically subtotal, but we'll use totalAmount without delivery/platform charge if possible
-      // Using totalAmount for simplicity as requested "total sales amount"
-      return sum + (order.totalAmount || 0);
+      const grossOrderValue = Number(order.subTotal ?? 0);
+      return sum + grossOrderValue * restaurantShareRatio;
     }, 0);
-
-    // Grouping by Date for timeSeries (Chart)
+    
     const timeSeriesMap: Record<string, number> = {};
     const itemMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
 
     orders.forEach((order) => {
       // TimeSeries grouping
       const dateStr = order.updatedAt.toISOString().split("T")[0] as string; // YYYY-MM-DD
-      timeSeriesMap[dateStr] = (timeSeriesMap[dateStr] || 0) + order.totalAmount;
+      const grossOrderValue = Number(order.subTotal ?? 0);
+      const netOrderRevenue = grossOrderValue * restaurantShareRatio;
+      timeSeriesMap[dateStr] = (timeSeriesMap[dateStr] || 0) + netOrderRevenue;
 
       // Itemwise totals
       if (order.items && Array.isArray(order.items)) {

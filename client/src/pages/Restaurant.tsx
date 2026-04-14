@@ -13,10 +13,13 @@ type SellerTab = "menu" | "add-item" | "sales";
 function Restaurant() {
 
   const [restaurant, setRestaurant] = useState<IRestaurant | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [tab, setTab] = useState<SellerTab>("menu");
 
   const fetchMyRestaurant = async ()=>{
+    setLoading(true);
+    setConnectionError(null);
     try {
       const { data } = await axios.get(`${import.meta.env.VITE_RESTAURANT_SERVICE_URL}/api/restaurant/my`,{
         headers: {
@@ -31,6 +34,9 @@ function Restaurant() {
       }
     } catch (error) {
       console.log(error);
+      if (axios.isAxiosError(error) && error.code === "ERR_NETWORK") {
+        setConnectionError("Restaurant service is unreachable. Make sure it is running on port 3001 and try again.");
+      }
     }finally{
       setLoading(false);
     }
@@ -68,6 +74,23 @@ function Restaurant() {
         <p className="text-gray-500">Loading your restaurant...</p>
       </div>
     );
+
+  if (connectionError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+          <p className="text-sm text-red-700">{connectionError}</p>
+          <button
+            onClick={fetchMyRestaurant}
+            className="mt-3 rounded bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
     if (!restaurant) {
       return <AddRestaurant fetchMyRestaurant={fetchMyRestaurant} />;
     }

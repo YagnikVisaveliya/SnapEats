@@ -60,7 +60,8 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -157,7 +158,7 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
                     <YAxis 
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(val) => `₹${val}`}
+                      tickFormatter={(val) => formatCurrency(Number(val ?? 0))}
                       tick={{ fill: "#64748B", fontSize: 13, fontWeight: 500 }}
                       dx={-10}
                     />
@@ -165,7 +166,7 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
                       contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', padding: '12px 16px' }}
                       itemStyle={{ fontWeight: 800, color: '#0F172A' }}
                       labelStyle={{ color: '#64748B', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}
-                      formatter={(val: any) => [`₹${val}`, 'Revenue']}
+                      formatter={(val) => [formatCurrency(Number(val ?? 0)), 'Revenue']}
                       labelFormatter={(val) => new Date(val).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     />
                     <Area
