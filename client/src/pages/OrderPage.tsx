@@ -1,11 +1,12 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import { useEffect, useState } from "react";
 import type { IOrder } from "../types";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { BiX } from "react-icons/bi";
+import { BiDownload, BiX } from "react-icons/bi";
 import UserOrderMap from "../components/UserOrderMap";
+import { downloadOrderInvoice } from "../utils/invoice";
 
 const OrderPage = () => {
   const { id } = useParams();
@@ -123,7 +124,7 @@ const OrderPage = () => {
 
         {/* Delivery OTP */}
         {order.otp && (order.status === "picked_up") && (
-          <div className="bg-gradient-to-r from-red-50 to-rose-100 rounded-xl shadow-sm border border-rose-200 p-5 text-center">
+          <div className="bg-linear-to-r from-red-50 to-rose-100 rounded-xl shadow-sm border border-rose-200 p-5 text-center">
             <h2 className="font-bold text-rose-800 mb-1">Delivery PIN</h2>
             <p className="text-sm text-rose-600 mb-3">Provide this code to your rider to receive your order</p>
             <div className="flex justify-center gap-2">
@@ -212,6 +213,23 @@ const OrderPage = () => {
             <p>Payment Method: {order.paymentMethod}</p>
             <p>Payment Status: {order.paymentStatus}</p>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                downloadOrderInvoice(order);
+                toast.success("Receipt download started");
+              } catch (error) {
+                console.error("Error generating invoice:", error);
+                toast.error("Unable to generate receipt");
+              }
+            }}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+          >
+            <BiDownload size={18} />
+            Download Receipt PDF
+          </button>
         </div>
       </div>
 
