@@ -5,8 +5,8 @@ export interface IAdminRevenue extends Document {
   totalOrders: number;
   totalRevenue: number;
 
-  commissionRevenue: number; // 10% of subTotal
-  platformRevenue: number; // 5% of subTotal
+  commissionRevenue: number; // 13% of subTotal
+  platformRevenue: number; // 8% of subTotal
   deliveryMargin: number;
 
   createdAt: Date;

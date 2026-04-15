@@ -5,6 +5,7 @@ export interface ITransaction extends Document {
   amount: number;
   type: "CREDIT" | "DEBIT";
   status: "PENDING" | "SUCCESS" | "FAILED";
+  paymentProvider?: "WALLET" | "LOYALTY" | "RAZORPAY" | "STRIPE";
   description: string;
   orderId?: string;
   paymentId?: string;
@@ -31,6 +32,10 @@ const transactionSchema: Schema<ITransaction> = new Schema(
       type: String,
       enum: ["PENDING", "SUCCESS", "FAILED"],
       default: "PENDING",
+    },
+    paymentProvider: {
+      type: String,
+      enum: ["WALLET", "LOYALTY", "RAZORPAY", "STRIPE"],
     },
     description: {
       type: String,

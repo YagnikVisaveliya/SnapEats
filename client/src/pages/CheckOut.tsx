@@ -97,16 +97,10 @@ const CheckOut = () => {
     }
   }, []);
 
-  const restaurant = (cart?.[0]?.restaurantId as IRestaurant) || null;
+  const cartItems = cart ?? [];
+  const isCartEmpty = cartItems.length === 0;
+  const restaurant = (cartItems[0]?.restaurantId as IRestaurant) || null;
   const [resLng, resLat] = restaurant?.autoLocation?.coordinates ?? [0, 0];
-
-  if (!cart || cart.length === 0) {
-    return (
-      <div className="flex min-h-[60vh] item-center justify-center">
-        <p className="text-gray-500 text-lg">Your cart is empty</p>
-      </div>
-    );
-  }
 
   const distance =
     userLat !== null && userLng !== null
@@ -127,6 +121,14 @@ const CheckOut = () => {
       setselectedAddressId(safeAddresses[0]._id);
     }
   }, [safeAddresses, selectedAddressId]);
+
+  if (isCartEmpty) {
+    return (
+      <div className="flex min-h-[60vh] item-center justify-center">
+        <p className="text-gray-500 text-lg">Your cart is empty</p>
+      </div>
+    );
+  }
 
   const createOrder = async (paymentMethod: "razorpay" | "stripe") => {
     if (!selectedAddressId) return null;
@@ -313,7 +315,7 @@ const CheckOut = () => {
           <div className="rounded-xl border bg-white p-5 shadow-sm">
             <h3 className="text-xl font-semibold">Items ({quantity})</h3>
             <div className="mt-4 space-y-3">
-              {cart.map((cartItem) => {
+              {cartItems.map((cartItem) => {
                 const item = cartItem.itemId as IMenuItem;
 
                 return (

@@ -2,6 +2,9 @@ import axios from 'axios';
 import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { Response } from 'express';
 
+const getWalletServiceBaseUrl = () =>
+    process.env.WALLET_SERVICE_URL || process.env.WALLET_SERVICE || "http://localhost:3007";
+
 export const getAllRestaurants = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE}/api/restaurant/all-restaurants`, {
@@ -129,7 +132,7 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
 
         const orders = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
 
-        let totalRevenue = 0;
+        let grossRevenue = 0;
         let totalOrders = 0;
 
         orders.forEach((order: any) => {
@@ -145,18 +148,58 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
             const commission = subTotal * 0.13;
             const deliveryMargin = deliveryCharge - riderEarning;
 
-            totalRevenue +=
+            grossRevenue +=
                 commission +
                 platformCharge +
                 deliveryMargin;
         });
 
+        let loyaltyPayout = 0;
+        try {
+            const { data: loyaltySummary } = await axios.get(
+                `${getWalletServiceBaseUrl()}/api/wallet/internal/loyalty-summary`,
+                {
+                    headers: {
+                        "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                    },
+                },
+            );
+
+            loyaltyPayout = Number(loyaltySummary?.totalLoyaltyBonus ?? 0);
+        } catch (walletError) {
+            loyaltyPayout = 0;
+        }
+
+        const totalRevenue = grossRevenue - loyaltyPayout;
+
     res.json({
       totalRevenue,
+      netRevenue: totalRevenue,
+      grossRevenue,
+      loyaltyPayout,
       totalOrders,
     });
     } catch (error: any) {
         res.status(500).json({ message: "Failed to fetch total revenue" });
+    }
+}
+
+export const getWalletTransactions = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.get(
+            `${getWalletServiceBaseUrl()}/api/wallet/internal/transactions?limit=120`,
+            {
+                headers: {
+                    "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                },
+            },
+        );
+
+        res.json(data);
+    } catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to fetch wallet transactions";
+        res.status(status).json({ message });
     }
 }
 

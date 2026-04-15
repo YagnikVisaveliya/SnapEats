@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import Wallet from "../model/Wallet.model.js";
 import Transaction from "../model/Transaction.model.js";
-import axios from "axios";
 import { sendLoyaltyBonusEmail } from "../utils/mail.js";
 
 export interface AuthenticatedRequest extends Request {
@@ -100,6 +99,80 @@ export const internalLoyaltyBonus = async (req: Request, res: Response) => {
     }
     
     res.json({ message: "Loyalty bonus credited", amount: bonusAmount });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// INTERNAL: Transaction history for admin service
+export const internalTransactions = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const limitRaw = Number(req.query.limit ?? 100);
+    const limit = Number.isFinite(limitRaw)
+      ? Math.max(1, Math.min(500, Math.floor(limitRaw)))
+      : 100;
+
+    const filter =
+      req.query.type === "loyalty"
+        ? {
+            $or: [
+              { paymentProvider: "LOYALTY" },
+              { description: { $regex: /^Loyalty bonus/i } },
+            ],
+          }
+        : {};
+
+    const transactions = await Transaction.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    res.json({
+      transactions,
+      count: transactions.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// INTERNAL: Summarize loyalty bonus payouts for net revenue calculation
+export const internalLoyaltySummary = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const result = await Transaction.aggregate([
+      {
+        $match: {
+          status: "SUCCESS",
+          type: "CREDIT",
+          $or: [
+            { paymentProvider: "LOYALTY" },
+            { description: { $regex: /^Loyalty bonus/i } },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalLoyaltyBonus: { $sum: "$amount" },
+          totalLoyaltyTransactions: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const summary = result[0] ?? {
+      totalLoyaltyBonus: 0,
+      totalLoyaltyTransactions: 0,
+    };
+
+    res.json(summary);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }

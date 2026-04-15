@@ -9,21 +9,31 @@ import { FiActivity, FiBarChart2, FiCheckCircle, FiClock, FiLogOut, FiRefreshCw,
 
 const Admin = () => {
   const { setUser, setIsAuth } = useAppData();
+  const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [unverifiedRestaurants, setUnverifiedRestaurants] = useState<any[]>([]);
   const [riders, setRiders] = useState<any[]>([]);
   const [unverifiedRiders, setUnverifiedRiders] = useState<any[]>([]);
   const [allOrders, setAllOrders] = useState<any[]>([]);
-  const [revenue, setRevenue] = useState<{ totalRevenue: number; totalOrders: number }>({
+  const [revenue, setRevenue] = useState<{
+    totalRevenue: number;
+    totalOrders: number;
+    grossRevenue: number;
+    netRevenue: number;
+    loyaltyPayout: number;
+  }>({
     totalRevenue: 0,
     totalOrders: 0,
+    grossRevenue: 0,
+    netRevenue: 0,
+    loyaltyPayout: 0,
   });
   const [topRestaurants, setTopRestaurants] = useState<Array<[string, number]>>([]);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<
-    "overview" | "restaurants" | "unverifiedRestaurants" | "riders" | "unverifiedRiders" | "orders" | "analytics"
+    "overview" | "restaurants" | "unverifiedRestaurants" | "riders" | "unverifiedRiders" | "orders" | "analytics" | "transactions"
   >("overview");
 
   const authHeader = {
@@ -56,6 +66,7 @@ const Admin = () => {
         ordersRes,
         revenueRes,
         topRestaurantsRes,
+        walletTransactionsRes,
       ] = await Promise.all([
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/restaurants`, authHeader),
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/restaurants/unverified`, authHeader),
@@ -64,6 +75,7 @@ const Admin = () => {
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/all-orders`, authHeader),
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/revenue`, authHeader),
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/top-restaurants`, authHeader),
+        axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/wallet-transactions`, authHeader),
       ]);
 
       setRestaurants(normalizeList(restaurantsRes.data, "restaurants"));
@@ -74,8 +86,12 @@ const Admin = () => {
       setRevenue({
         totalRevenue: Number(revenueRes.data?.totalRevenue ?? 0),
         totalOrders: Number(revenueRes.data?.totalOrders ?? 0),
+        grossRevenue: Number(revenueRes.data?.grossRevenue ?? 0),
+        netRevenue: Number(revenueRes.data?.netRevenue ?? revenueRes.data?.totalRevenue ?? 0),
+        loyaltyPayout: Number(revenueRes.data?.loyaltyPayout ?? 0),
       });
       setTopRestaurants(Array.isArray(topRestaurantsRes.data) ? topRestaurantsRes.data : []);
+      setWalletTransactions(normalizeList(walletTransactionsRes.data, "transactions"));
     } catch (error) {
       console.log(error);
       toast.error("Failed to load admin dashboard data");
@@ -224,6 +240,7 @@ const Admin = () => {
               { key: "unverifiedRiders", label: `Unverified Riders (${unverifiedRiders.length})` },
               { key: "orders", label: `All Orders (${allOrders.length})` },
               { key: "analytics", label: "Revenue & Top Restaurants" },
+              { key: "transactions", label: `Transactions (${walletTransactions.length})` },
             ].map((item) => (
               <button
                 key={item.key}
@@ -273,7 +290,7 @@ const Admin = () => {
             <div className="space-y-6">
               <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/10 p-5">
                 <p className="text-xs uppercase tracking-widest text-emerald-200">Platform Revenue</p>
-                <p className="mt-2 text-3xl font-black text-white">{formatCurrency(revenue.totalRevenue)}</p>
+                <p className="mt-2 text-3xl font-black text-white">{formatCurrency(revenue.netRevenue || revenue.totalRevenue)}</p>
                 <p className="mt-1 text-sm text-emerald-100/90">From {revenue.totalOrders} paid orders</p>
               </div>
 
@@ -382,10 +399,18 @@ const Admin = () => {
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-white/4 p-5">
               <h2 className="text-lg font-bold text-white">Revenue Dashboard</h2>
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-cyan-300/20 bg-cyan-500/10 p-4">
+                  <p className="text-xs uppercase tracking-widest text-cyan-200">Gross Revenue</p>
+                  <p className="mt-1 text-2xl font-black text-white">{formatCurrency(revenue.grossRevenue || revenue.totalRevenue)}</p>
+                </div>
                 <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/10 p-4">
-                  <p className="text-xs uppercase tracking-widest text-emerald-200">Total Platform Revenue</p>
-                  <p className="mt-1 text-2xl font-black text-white">{formatCurrency(revenue.totalRevenue)}</p>
+                  <p className="text-xs uppercase tracking-widest text-emerald-200">Net Revenue</p>
+                  <p className="mt-1 text-2xl font-black text-white">{formatCurrency(revenue.netRevenue || revenue.totalRevenue)}</p>
+                </div>
+                <div className="rounded-xl border border-rose-300/20 bg-rose-500/10 p-4">
+                  <p className="text-xs uppercase tracking-widest text-rose-200">Loyalty Bonus Paid</p>
+                  <p className="mt-1 text-2xl font-black text-white">-{formatCurrency(revenue.loyaltyPayout)}</p>
                 </div>
                 <div className="rounded-xl border border-blue-300/20 bg-blue-500/10 p-4">
                   <p className="text-xs uppercase tracking-widest text-blue-200">Paid Orders Count</p>
@@ -430,6 +455,54 @@ const Admin = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "transactions" && (
+          <div className="rounded-2xl border border-white/10 bg-white/4 p-5">
+            <h2 className="text-lg font-bold text-white">Wallet Transaction History</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Includes wallet refunds and loyalty bonus credits.
+            </p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-slate-400">
+                    <th className="px-2 py-3">Date</th>
+                    <th className="px-2 py-3">User</th>
+                    <th className="px-2 py-3">Type</th>
+                    <th className="px-2 py-3">Provider</th>
+                    <th className="px-2 py-3">Description</th>
+                    <th className="px-2 py-3 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {walletTransactions.map((tx) => (
+                    <tr key={tx._id} className="border-b border-white/5 text-slate-200">
+                      <td className="px-2 py-3 text-xs text-slate-400">
+                        {tx.createdAt ? new Date(tx.createdAt).toLocaleString("en-IN") : "-"}
+                      </td>
+                      <td className="px-2 py-3 font-mono text-xs text-slate-300">{String(tx.userId || "-").slice(0, 10)}</td>
+                      <td className="px-2 py-3">
+                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${tx.type === "CREDIT" ? "bg-emerald-500/20 text-emerald-200" : "bg-amber-400/20 text-amber-200"}`}>
+                          {tx.type || "-"}
+                        </span>
+                      </td>
+                      <td className="px-2 py-3 text-xs text-cyan-200">{tx.paymentProvider || "-"}</td>
+                      <td className="px-2 py-3 text-xs text-slate-300">{tx.description || "-"}</td>
+                      <td className="px-2 py-3 text-right font-semibold text-white">{formatCurrency(Number(tx.amount ?? 0))}</td>
+                    </tr>
+                  ))}
+                  {walletTransactions.length === 0 && (
+                    <tr>
+                      <td className="px-2 py-6 text-center text-slate-400" colSpan={6}>
+                        No wallet transactions found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

@@ -34,8 +34,15 @@ export const createRazorPayOrder = async (req: Request,res: Response) => {
             }
         );
 
+        const orderAmount = Number(data?.amount ?? 0);
+        const amountInPaise = Math.round(orderAmount * 100);
+
+        if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
+            return res.status(400).json({ message: "Invalid order amount" });
+        }
+
         const razorPayOrder = await razorpayInstance.orders.create({
-            amount: data.amount * 100,
+            amount: amountInPaise,
             currency: data.currency || "INR",
             receipt: orderId,
         });
@@ -46,8 +53,8 @@ export const createRazorPayOrder = async (req: Request,res: Response) => {
         });
     } catch (error: any) {
         console.error("createRazorPayOrder error:", error?.response?.data || error?.message || error);
-        return res.status(500).json({
-            message: "Failed to create Razorpay order",
+        return res.status(error?.response?.status ?? 500).json({
+            message: error?.response?.data?.message || "Failed to create Razorpay order",
         });
     }
 }
@@ -102,6 +109,13 @@ export const payWithStripe = async (req: Request, res: Response) => {
             }
         );
 
+        const orderAmount = Number(data?.amount ?? 0);
+        const amountInPaise = Math.round(orderAmount * 100);
+
+        if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
+            return res.status(400).json({ message: "Invalid order amount" });
+        }
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [   
@@ -111,7 +125,7 @@ export const payWithStripe = async (req: Request, res: Response) => {
                         product_data: {
                             name: `Payment for order Food Order`,
                         },
-                        unit_amount: data.amount * 100,
+                        unit_amount: amountInPaise,
                     },
                     quantity: 1,
                 },
@@ -129,9 +143,9 @@ export const payWithStripe = async (req: Request, res: Response) => {
             url: session.url,
         })
 
-    } catch (error) {
-        res.status(500).json({
-            message: "Stripe payment initiation failed",
+    } catch (error: any) {
+        res.status(error?.response?.status ?? 500).json({
+            message: error?.response?.data?.message || "Stripe payment initiation failed",
         })
     }
 } 
