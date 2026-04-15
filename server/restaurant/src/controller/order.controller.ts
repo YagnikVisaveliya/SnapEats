@@ -897,3 +897,22 @@ export const getRestaurantSalesAnalytics = async (
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const allOrders = async (req: AuthenticatedRequest, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({
+      message: "Forbidden",
+    });
+  }
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    console.error("Error fetching all orders:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}

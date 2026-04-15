@@ -227,6 +227,74 @@ export const getSingleRestaurant = async (req: AuthenticatedRequest, res: Respon
     }
 }
 
+export const allRestaurants = async (req: AuthenticatedRequest, res: Response) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({
+        message: "Forbidden",
+        });
+    }
+    try {
+        const restaurants = await Restaurant.find({ isVerified: true });
+        res.json({
+            success: true,
+            count: restaurants.length,
+            restaurants,
+        });
+    } catch (error: any) {
+        console.log("Error in allRestaurants:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const getUnverifiedRestaurants = async (req: AuthenticatedRequest, res: Response) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({
+        message: "Forbidden",
+        });
+    }
+    try {
+        const restaurants = await Restaurant.find({ isVerified: false });
+        res.json({
+            success: true,
+            count: restaurants.length,
+            restaurants,
+        });
+    }   
+    catch (error: any) {
+        console.log("Error in getUnverifiedRestaurants:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }   
+}
+
+export const verifyRestaurant = async (req: AuthenticatedRequest, res: Response) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({
+        message: "Forbidden",
+        });
+    }
+    try {
+        const { restaurantId, isVerified } = req.body;
+        if(typeof isVerified !== "boolean"){
+            return res.status(400).json({ message: "Invalid isVerified value" });
+        }
+        const restaurant = await Restaurant.findByIdAndUpdate(
+            restaurantId,
+            { isVerified }, 
+            { new: true }
+        );
+        if(!restaurant){
+            return res.status(404).json({ message: "Restaurant not found" });
+        }
+        res.json({
+            message: `Restaurant has been ${isVerified ? "verified" : "unverified"}`,
+            restaurant,
+        });
+    } catch (error: any) {
+        console.log("Error in verifyRestaurant:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
 // export const reverseGeocode = async (req: AuthenticatedRequest, res: Response) => {
 //     try {
 //         const { latitude, longitude } = req.query;

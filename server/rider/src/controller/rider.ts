@@ -325,3 +325,59 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: any) => 
         return res.status(500).json({ message: "Internal server error" });      
     }
 }
+
+export const allriders = async (req: AuthenticatedRequest, res: any) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({
+        message: "Forbidden",
+        });
+    }
+    try {
+        const data = await Rider.find().sort({ createdAt: -1 });
+        res.json({
+            success: true,
+            count: data.length,
+            riders: data,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch riders" });
+    }
+}
+
+export const unverifiedriders = async (req: AuthenticatedRequest, res: any) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({
+        message: "Forbidden",
+        });
+    }
+    try {
+        const data = await Rider.find({ isVerified: false }).sort({ createdAt: -1 });
+        res.json({  
+            success: true,
+            count: data.length,
+            riders: data,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch unverified riders" });
+    }
+}   
+
+export const verifyRider = async (req: AuthenticatedRequest, res: any) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({
+        message: "Forbidden",
+        });
+    }
+    try {
+        const { riderId } = req.body;
+        const rider = await Rider.findById(riderId);
+        if (!rider) {
+            return res.status(404).json({ message: "Rider not found" });
+        }
+        rider.isVerified = true;
+        await rider.save();
+        res.json({ message: "Rider verified successfully" });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to verify rider" });
+    }
+}   

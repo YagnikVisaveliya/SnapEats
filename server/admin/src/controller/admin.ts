@@ -1,69 +1,204 @@
-import { Request, Response } from "express";
-import { ObjectId } from "mongodb";
-import { getRestaurantCollection,getRiderCollection } from "../utils/collection.js";
+import axios from 'axios';
+import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
+import { Response } from 'express';
 
-export const getPendingRestaurants = async (req: Request, res: Response) => {
-    const restaurants = await (await getRestaurantCollection()).find({ isVerified: false }).toArray();
+export const getAllRestaurants = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE}/api/restaurant/all-restaurants`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                authorization: req.headers.authorization,
+            },
+        });
+        res.json(data);
+    } catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to fetch restaurants";
+        res.status(status).json({ message });
+    }
+}
+
+export const getunverifiedRestaurants = async (req: AuthenticatedRequest, res: Response) => {
+    try{
+        const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE}/api/restaurant/unverified`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                authorization: req.headers.authorization,
+            }  
+         });
+        res.json(data);
+    }catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to fetch unverified restaurants";
+        res.status(status).json({ message });
+    }
+}
+
+export const verifyRestaurant = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id: restaurantId } = req.params;
+        const { data } = await axios.put(`${process.env.RESTAURANT_SERVICE}/api/restaurant/verify`, {
+            restaurantId,
+            isVerified: true,
+        }, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                authorization: req.headers.authorization,
+            }
+        });
+        res.json(data);
+        
+    } catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to verify restaurant";
+        res.status(status).json({ message });
+    }
+}
+
+export const getAllriders = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.get(`${process.env.RIDER_SERVICE}/api/rider/all`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                authorization: req.headers.authorization,
+            },
+        });
+        res.json(data);
+    } catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to fetch riders";
+        res.status(status).json({ message });
+    }
+}
+
+export const getunverifiedRiders = async (req: AuthenticatedRequest, res: Response) => {
+    try{
+        const { data } = await axios.get(`${process.env.RIDER_SERVICE}/api/rider/unverified`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                authorization: req.headers.authorization,
+            }
+         });
+         res.json(data);
+    }catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to fetch unverified riders";
+        res.status(status).json({ message });
+    }
+}
+
+export const verifyRider = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const riderId = req.params.id ?? req.body.riderId;
+        const { data } = await axios.post(`${process.env.RIDER_SERVICE}/api/rider/verify`, {
+            riderId,
+        }, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                authorization: req.headers.authorization,
+            }
+        });
+        res.json(data);
+    } catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to verify rider";
+        res.status(status).json({ message });
+    }
+}
+
+export const getallOrders = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE}/api/order/all`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+        });
+        res.json(data);
+    } catch (error: any) {
+    res.status(500).json({ message: "Failed to fetch orders" });
+    }
+}
+
+export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE}/api/order/all`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+        });
+
+        const orders = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
+
+        let totalRevenue = 0;
+        let totalOrders = 0;
+
+        orders.forEach((order: any) => {
+            if (order.paymentStatus !== "paid") return;
+
+            totalOrders++;
+
+            const subTotal = Number(order.subTotal ?? 0);
+            const platformCharge = Number(order.platformCharge ?? 0);
+            const deliveryCharge = Number(order.deliveryCharge ?? 0);
+            const riderEarning = Number(order.riderEarning ?? 0);
+
+            const commission = subTotal * 0.1;
+            const deliveryMargin = deliveryCharge - riderEarning;
+
+            totalRevenue +=
+                commission +
+                platformCharge +
+                deliveryMargin;
+        });
 
     res.json({
-        count: restaurants.length,
-        restaurants
-    })
+      totalRevenue,
+      totalOrders,
+    });
+    } catch (error: any) {
+        res.status(500).json({ message: "Failed to fetch total revenue" });
+    }
 }
 
-export const getPendingRiders = async (req: Request, res: Response) => {
-    const riders = await (await getRiderCollection()).find({ isVerified: false }).toArray();
+export const getTopRestaurants = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+        const { data } = await axios.get(
+      `${process.env.RESTAURANT_SERVICE}/api/order/all`,
+      {
+        headers: { "x-internal-key": process.env.INTERNAL_SERVICE_KEY },
+      }
+    );
 
-    res.json({
-        count: riders.length,
-        riders
-    })
-}
+    const orders = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
 
-export const verifyRestaurant = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const map: Record<string, number> = {};
 
-    if(typeof id !== "string") {
-        return res.status(400).json({
-            message: "Invalid restaurant id"
-        })
-    }
-    if(!ObjectId.isValid(id)) {
-        return res.status(400).json({
-            message: "Invalid restaurant id"
-        })
-    }
+    orders.forEach((order: any) => {
+      if (order.paymentStatus !== "paid") return;
 
-    const restaurant = await (await getRestaurantCollection()).updateOne({ _id: new ObjectId(id) }, { $set: { isVerified: true, updatedAt: new Date() } });
+            const restaurantId = String(order.restaurantId ?? "");
+            if (!restaurantId) return;
 
-    if(restaurant.matchedCount === 0) {
-        return res.status(404).json({
-            message: "Restaurant not found"
-        })
-    }
-    res.json({ message: "Restaurant verified successfully" });
-}
+            const subTotal = Number(order.subTotal ?? 0);
+            const platformCharge = Number(order.platformCharge ?? 0);
 
-export const verifyRider = async (req: Request, res: Response) => {
-    const { id } = req.params;
+      const revenue =
+                subTotal * 0.1 + platformCharge;
 
-    if(typeof id !== "string") {
-        return res.status(400).json({
-            message: "Invalid rider id"
-        })
-    }
-    if(!ObjectId.isValid(id)) {
-        return res.status(400).json({
-            message: "Invalid rider id"
-        })
-    }
+            if (!map[restaurantId]) {
+                map[restaurantId] = 0;
+      }
 
-    const rider = await (await getRiderCollection()).updateOne({ _id: new ObjectId(id) }, { $set: { isVerified: true, updatedAt: new Date() } });
+            map[restaurantId] += revenue;
+    });
 
-    if(rider.matchedCount === 0) {
-        return res.status(404).json({
-            message: "Rider not found"
-        })
-    }
-    res.json({ message: "Rider verified successfully" });
-}
+    const sorted = Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    res.json(sorted);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to get top restaurants" });
+  }
+};
+

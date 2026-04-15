@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrders, getCurrentOrdersForRider, getDeliveredOrdersForRider, getMyOrders, getOrderPreviewForRider, getSingleOrder, updateOrderStatus, updateOrderStatusByRider, getRestaurantSalesAnalytics, cancelOrder } from "../controller/order.controller.js";
+import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrders, getCurrentOrdersForRider, getDeliveredOrdersForRider, getMyOrders, getOrderPreviewForRider, getSingleOrder, updateOrderStatus, updateOrderStatusByRider, getRestaurantSalesAnalytics, cancelOrder, allOrders } from "../controller/order.controller.js";
 import { isAuth, isSeller } from "../middleware/isAuth.middleware.js";
 import { updateStatusRestaurant } from "../controller/restaurant.controller.js";
 
@@ -16,6 +16,8 @@ router.route('/current/rider').get(getCurrentOrdersForRider);
 router.route('/rider/request/:orderId').get(getOrderPreviewForRider);
 router.route('/rider/delivered').get(getDeliveredOrdersForRider);
 router.route('/update-status/rider').put(updateOrderStatusByRider);
+
+router.route('/all').get(allOrders);
 // Specific routes before generic :orderId routes
 router.route('/:orderId/cancel').put(isAuth, cancelOrder);
 router.route('/:orderId').put(isAuth,isSeller,updateOrderStatus)

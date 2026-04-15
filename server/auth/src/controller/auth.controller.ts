@@ -32,8 +32,6 @@ export const loginUser = async (req:Request, res:Response) => {
 
         res.status(200).json({ message: "logged in successfully", user, token });
 
-
-
     }catch(error){
         console.error("Error logging in user:", error);
         res.status(500).json({ message: "Internal server error" });
