@@ -96,14 +96,14 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     };
   });
 
-  const deliveryFee = subTotal > 150 ? 0 : distance < 2 ? 34 : distance * 17;
-  const platformFee = subTotal * 0.05; // Example: 5% of total price
+  const deliveryFee = subTotal > 150 ? 0 : distance < 2 ? 24 : distance * 12;
+  const platformFee = subTotal * 0.08; // 8% of total price
   const totalAmount = subTotal + deliveryFee + platformFee;
 
   const expireAt = new Date(Date.now() + 15 * 60 * 1000);
   const [longitude, latitude] = address.location.coordinates;
 
-  const riderEarning = Math.ceil(distance) * 17;
+  const riderEarning = Math.ceil(distance) * 12;
   const otp = Math.floor(100000 + Math.random() * 900000);
 
   const order = await Order.create({
@@ -843,7 +843,7 @@ export const getRestaurantSalesAnalytics = async (
 
     const orders = await Order.find(query).select("totalAmount subTotal deliveryCharge items updatedAt");
 
-    const PLATFORM_CUT_PERCENT = 10;
+    const PLATFORM_CUT_PERCENT = 13; // Example: Platform takes 13% commission on each order
     const restaurantShareRatio = (100 - PLATFORM_CUT_PERCENT) / 100;
 
     const totalRevenue = orders.reduce((sum, order) => {

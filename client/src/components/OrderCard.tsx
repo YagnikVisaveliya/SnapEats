@@ -69,7 +69,7 @@ const OrderCard = ({ order, onStatusUpdate }: props) => {
     }
   };
 
-  const totalrestaurantEarnings = order.subTotal - order.subTotal * 0.10;
+  const totalrestaurantEarnings = order.subTotal - order.subTotal * 0.13;
 
   return <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
       <div className="flex justify-between items-center">

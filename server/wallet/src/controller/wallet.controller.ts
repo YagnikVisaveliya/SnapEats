@@ -75,7 +75,7 @@ export const internalLoyaltyBonus = async (req: Request, res: Response) => {
 
   try {
     const { userId, userEmail, orderCount } = req.body;
-    const bonusAmount = Math.floor(Math.random() * (100 - 50 + 1)) + 50; // Random bonus between 50 and 100
+    const bonusAmount = Math.floor(Math.random() * (50 - 20 + 1)) + 20; // Random bonus between 20 and 50
 
     let wallet = await Wallet.findOne({ userId });
     if (!wallet) wallet = await Wallet.create({ userId, balance: 0 });

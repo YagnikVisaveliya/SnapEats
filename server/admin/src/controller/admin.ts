@@ -142,7 +142,7 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
             const deliveryCharge = Number(order.deliveryCharge ?? 0);
             const riderEarning = Number(order.riderEarning ?? 0);
 
-            const commission = subTotal * 0.1;
+            const commission = subTotal * 0.13;
             const deliveryMargin = deliveryCharge - riderEarning;
 
             totalRevenue +=
@@ -183,7 +183,7 @@ export const getTopRestaurants = async (req: AuthenticatedRequest, res: Response
             const platformCharge = Number(order.platformCharge ?? 0);
 
       const revenue =
-                subTotal * 0.1 + platformCharge;
+                subTotal * 0.13 + platformCharge;
 
             if (!map[restaurantId]) {
                 map[restaurantId] = 0;

@@ -113,9 +113,9 @@ const CheckOut = () => {
       ? getDistanceKm(userLat, userLng, resLat, resLng)
       : 0;
 
-  const deliveryFee = totalPrice > 150 ? 0 : distance < 2 ? 34 : distance * 17;
+  const deliveryFee = totalPrice > 150 ? 0 : distance < 2 ? 24 : distance * 12;
 
-  const platformFee = totalPrice * 0.05;
+  const platformFee = totalPrice * 0.08;
 
   const grandTotal = totalPrice + deliveryFee + platformFee;
   const safeAddresses = Array.isArray(addresses) ? addresses : [];
