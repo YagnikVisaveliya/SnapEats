@@ -26,6 +26,9 @@ const CheckOut = () => {
   const [loadingRazorpay, setLoadingRazorpay] = useState(false);
   const [loadingStripe, setLoadingStripe] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [loadingWallet, setLoadingWallet] = useState(true);
+  const [useWallet, setUseWallet] = useState(true);
 
   const getDistanceKm = (
     lat1: number,
@@ -85,6 +88,28 @@ const CheckOut = () => {
     fetchAddresses();
   }, [cart]);
 
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_WALLET_SERVICE_URL}/api/wallet/balance`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+        setWalletBalance(Number(data?.balance ?? 0));
+      } catch (error) {
+        setWalletBalance(0);
+      } finally {
+        setLoadingWallet(false);
+      }
+    };
+
+    fetchWalletBalance();
+  }, []);
+
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
 
@@ -112,6 +137,9 @@ const CheckOut = () => {
   const platformFee = totalPrice * 0.08;
 
   const grandTotal = totalPrice + deliveryFee + platformFee;
+  const hasWalletBalance = walletBalance > 0;
+  const walletApplied = useWallet ? Math.min(walletBalance, grandTotal) : 0;
+  const payableAmount = Math.max(0, grandTotal - walletApplied);
   const safeAddresses = Array.isArray(addresses) ? addresses : [];
   const selectedAddress =
     safeAddresses.find((add) => add._id === selectedAddressId) || null;
@@ -140,6 +168,7 @@ const CheckOut = () => {
         {
           paymentMethod,
           addressId: selectedAddressId,
+          useWallet,
         },
         {
           headers: {
@@ -163,6 +192,12 @@ const CheckOut = () => {
       const order = await createOrder("razorpay");
       if (!order) return;
 
+      if (Number(order.amount ?? 0) <= 0 || order.paymentStatus === "paid") {
+        toast.success("Order placed using wallet balance 🎉");
+        navigate(`/paymentsuccess/wallet-${order.orderId}`);
+        return;
+      }
+
       const { orderId, amount } = order;
 
       const { data } = await axios.post(
@@ -176,7 +211,7 @@ const CheckOut = () => {
 
       const options = {
         key,
-        amount: amount * 100,
+        amount: Math.round(Number(amount) * 100),
         currency: "INR",
         name: "SnapEats",
         description: "Food Order Payment",
@@ -224,6 +259,12 @@ const CheckOut = () => {
 
       const order = await createOrder("stripe");
       if (!order) return;
+
+      if (Number(order.amount ?? 0) <= 0 || order.paymentStatus === "paid") {
+        toast.success("Order placed using wallet balance 🎉");
+        navigate(`/paymentsuccess/wallet-${order.orderId}`);
+        return;
+      }
 
       const stripe = await stripePromise;
       if (!stripe) {
@@ -358,13 +399,37 @@ const CheckOut = () => {
                 <span>Platform Fee</span>
                 <span>₹{platformFee.toFixed(2)}</span>
               </div>
+              {hasWalletBalance && (
+                <div className="flex justify-between text-sm">
+                  <span>Wallet Used</span>
+                  <span className="text-emerald-600">-₹{walletApplied.toFixed(2)}</span>
+                </div>
+              )}
 
               <div className="border-t pt-3 flex justify-between text-lg font-semibold">
-                <span>Grand Total</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
+                <span>Payable Total</span>
+                <span>₹{payableAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>
+
+          {hasWalletBalance && (
+            <div className="rounded-xl border bg-white p-5 shadow-sm">
+              <h3 className="text-xl font-semibold">Wallet</h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Available Balance: {loadingWallet ? "Loading..." : `₹${walletBalance.toFixed(2)}`}
+              </p>
+              <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={useWallet}
+                  onChange={(e) => setUseWallet(e.target.checked)}
+                  className="accent-red-600"
+                />
+                Use wallet balance at checkout
+              </label>
+            </div>
+          )}
 
           <div className="rounded-xl border bg-white p-5 shadow-sm">
             <h3 className="text-xl font-semibold">Payment</h3>

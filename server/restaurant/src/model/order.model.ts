@@ -22,6 +22,8 @@ export interface IOrder extends Document {
     deliveryCharge: number;
     platformCharge: number;
     totalAmount: number;
+    walletUsed: number;
+    payableAmount: number;
     otp: number;
 
     addressId: string;
@@ -103,6 +105,14 @@ export const orderSchema: Schema = new Schema({
     deliveryCharge: Number,
     platformCharge: Number,
     totalAmount: Number,
+    walletUsed: {
+      type: Number,
+      default: 0,
+    },
+    payableAmount: {
+      type: Number,
+      default: 0,
+    },
     otp: {
       type: Number,
       required: true,

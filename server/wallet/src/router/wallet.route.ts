@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
 	getBalance,
 	getTransactions,
+	internalDebit,
 	internalRefund,
 	internalLoyaltyBonus,
 	internalTransactions,
@@ -17,6 +18,7 @@ router.get("/transactions", isAuth, getTransactions);
 
 // Internal Routes (Protected by internal key)
 router.post("/internal/refund", internalRefund);
+router.post("/internal/debit", internalDebit);
 router.post("/internal/loyalty-bonus", internalLoyaltyBonus);
 router.get("/internal/transactions", internalTransactions);
 router.get("/internal/loyalty-summary", internalLoyaltySummary);

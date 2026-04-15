@@ -14,7 +14,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const { paymentMethod, addressId } = req.body;
+  const { paymentMethod, addressId, useWallet } = req.body;
 
   if (!addressId) {
     return res.status(400).json({ message: "address ID are required" });
@@ -106,6 +106,32 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   const riderEarning = Math.ceil(distance) * 12;
   const otp = Math.floor(100000 + Math.random() * 900000);
 
+  let walletUsed = 0;
+  if (useWallet) {
+    try {
+      const { data: walletDebit } = await axios.post(
+        `${process.env.WALLET_SERVICE_URL}/api/wallet/internal/debit`,
+        {
+          userId: user._id.toString(),
+          amount: totalAmount,
+          description: "Wallet used during checkout",
+        },
+        {
+          headers: {
+            "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+          },
+        },
+      );
+
+      walletUsed = Number(walletDebit?.debitedAmount ?? 0);
+    } catch (walletError) {
+      return res.status(500).json({ message: "Failed to apply wallet amount" });
+    }
+  }
+
+  const payableAmount = Math.max(0, Number((totalAmount - walletUsed).toFixed(2)));
+  const paymentStatus = payableAmount === 0 ? "paid" : "pending";
+
   const order = await Order.create({
     userId: user._id.toString(),
     userEmail: user.email,
@@ -119,6 +145,8 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     deliveryCharge: deliveryFee,
     platformCharge: platformFee,
     totalAmount,
+    walletUsed,
+    payableAmount,
     addressId: address._id.toString(),
     deliveryAddress: {
       fromattedAddress: address.formattedAddress,
@@ -128,7 +156,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     },
 
     paymentMethod,
-    paymentStatus: "pending",
+    paymentStatus,
     status: "placed",
     expireAt,
     otp,
@@ -139,7 +167,10 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   res.status(201).json({
     message: "Order created successfully",
     orderId: order._id.toString(),
-    amount: totalAmount,
+    amount: payableAmount,
+    totalAmount,
+    walletUsed,
+    paymentStatus,
   });
 };
 
@@ -270,7 +301,7 @@ export const fetchOrderForPayment = async (
 
   res.status(200).json({
     orderId: order._id.toString(),
-    amount: order.totalAmount,
+    amount: order.payableAmount ?? Math.max(0, Number((order.totalAmount - (order.walletUsed ?? 0)).toFixed(2))),
     currency: "INR",
   });
 };

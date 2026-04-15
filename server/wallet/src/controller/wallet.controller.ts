@@ -66,6 +66,52 @@ export const internalRefund = async (req: Request, res: Response) => {
   }
 };
 
+// INTERNAL: Debit wallet balance (supports partial debit)
+export const internalDebit = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const { userId, amount, orderId, description } = req.body;
+
+    const requestedAmount = Number(amount ?? 0);
+    if (!userId || !Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+      return res.status(400).json({ message: "Valid userId and amount are required" });
+    }
+
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) wallet = await Wallet.create({ userId, balance: 0 });
+
+    const safeBalance = Number(wallet.balance ?? 0);
+    const debitedAmount = Math.min(safeBalance, requestedAmount);
+    const roundedDebit = Number(debitedAmount.toFixed(2));
+
+    wallet.balance = Number((safeBalance - roundedDebit).toFixed(2));
+    await wallet.save();
+
+    if (roundedDebit > 0) {
+      await Transaction.create({
+        userId,
+        amount: roundedDebit,
+        type: "DEBIT",
+        status: "SUCCESS",
+        paymentProvider: "WALLET",
+        description: description || `Wallet used for order #${orderId}`,
+        orderId,
+      });
+    }
+
+    res.json({
+      message: "Wallet debited",
+      debitedAmount: roundedDebit,
+      remainingBalance: wallet.balance,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // INTERNAL: Loyalty Bonus
 export const internalLoyaltyBonus = async (req: Request, res: Response) => {
   if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
