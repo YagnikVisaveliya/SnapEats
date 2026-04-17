@@ -383,10 +383,11 @@ const Admin = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-300 md:grid-cols-4">
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-300 md:grid-cols-5">
                     <p>Total: {formatCurrency(Number(order.totalAmount ?? 0))}</p>
                     <p>Subtotal: {formatCurrency(Number(order.subTotal ?? 0))}</p>
                     <p>Delivery: {formatCurrency(Number(order.deliveryCharge ?? 0))}</p>
+                    <p>RiderCharge: {formatCurrency(Number(order.riderEarning ?? 0))}</p>
                     <p>Platform: {formatCurrency(Number(order.platformCharge ?? 0))}</p>
                   </div>
                 </div>

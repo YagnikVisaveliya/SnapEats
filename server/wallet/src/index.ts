@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import cors from "cors";
 import walletRoutes from "./router/wallet.route.js";
 import connectDB from "./config/db.js";
-import { connectRabbitMQ } from "./config/rabbitmq.js";
 
 dotenv.config();
 
@@ -23,7 +22,6 @@ const PORT = process.env.PORT || 3007;
 app.listen(PORT, () => {
   console.log(`Wallet service is running on port ${PORT}`);
   connectDB();
-  connectRabbitMQ();
 });
 
 export default app;

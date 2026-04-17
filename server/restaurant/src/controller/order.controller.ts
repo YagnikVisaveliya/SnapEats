@@ -761,12 +761,28 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
     order.status = "delivered";
     await order.save();
 
-    // Loyalty Reward Trigger: Every 5 orders
+    // Reward triggers: first order cashback + every 5th delivered order loyalty bonus
     try {
       const deliveredCount = await Order.countDocuments({
         userId: order.userId,
         status: "delivered",
       });
+
+      if (deliveredCount === 1) {
+        await axios.post(
+          `${process.env.WALLET_SERVICE_URL}/api/wallet/internal/first-order-cashback`,
+          {
+            userId: order.userId,
+            userEmail: order.userEmail,
+            orderId: order._id,
+          },
+          {
+            headers: {
+              "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+          }
+        );
+      }
 
       if (deliveredCount > 0 && deliveredCount % 5 === 0) {
         await axios.post(
@@ -784,7 +800,7 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
         );
       }
     } catch (loyaltyError) {
-      console.error("Failed to trigger loyalty reward:", loyaltyError);
+      console.error("Failed to trigger order rewards:", loyaltyError);
     }
 
     await axios.post(

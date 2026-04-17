@@ -76,7 +76,7 @@ const Orders = () => {
       <h1 className="text-2xl font-bold">My Orders</h1>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Active Orders</h2>
+        <h2 className="text-lg font-semibold">Active Orders ({activeOrders.length})</h2>
 
         {activeOrders.length === 0 ? (
           <p>No active orders</p>
@@ -92,7 +92,7 @@ const Orders = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Completed Orders</h2>
+        <h2 className="text-lg font-semibold">Completed Orders ({completedOrders.length})</h2>
 
         {completedOrders.length === 0 ? (
           <p>No Completed orders</p>

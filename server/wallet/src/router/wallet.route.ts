@@ -5,6 +5,7 @@ import {
 	internalDebit,
 	internalRefund,
 	internalLoyaltyBonus,
+	internalFirstOrderCashback,
 	internalTransactions,
 	internalLoyaltySummary,
 } from "../controller/wallet.controller.js";
@@ -20,6 +21,7 @@ router.get("/transactions", isAuth, getTransactions);
 router.post("/internal/refund", internalRefund);
 router.post("/internal/debit", internalDebit);
 router.post("/internal/loyalty-bonus", internalLoyaltyBonus);
+router.post("/internal/first-order-cashback", internalFirstOrderCashback);
 router.get("/internal/transactions", internalTransactions);
 router.get("/internal/loyalty-summary", internalLoyaltySummary);
 

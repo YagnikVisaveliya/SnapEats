@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Wallet from "../model/Wallet.model.js";
 import Transaction from "../model/Transaction.model.js";
-import { sendLoyaltyBonusEmail } from "../utils/mail.js";
+import { sendFirstOrderCashbackEmail, sendLoyaltyBonusEmail } from "../utils/mail.js";
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
@@ -150,6 +150,69 @@ export const internalLoyaltyBonus = async (req: Request, res: Response) => {
   }
 };
 
+// INTERNAL: First order cashback (one-time, fixed amount)
+export const internalFirstOrderCashback = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const { userId, userEmail, orderId } = req.body;
+    const cashbackAmount = 50;
+
+    if (!userId || !orderId) {
+      return res.status(400).json({ message: "userId and orderId are required" });
+    }
+
+    const existingFirstOrderCashback = await Transaction.findOne({
+      userId,
+      type: "CREDIT",
+      status: "SUCCESS",
+      paymentProvider: "LOYALTY",
+      description: { $regex: /^First order cashback/i },
+    });
+
+    if (existingFirstOrderCashback) {
+      return res.json({
+        message: "First order cashback already credited",
+        amount: 0,
+        alreadyCredited: true,
+      });
+    }
+
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) wallet = await Wallet.create({ userId, balance: 0 });
+
+    wallet.balance = Number((Number(wallet.balance ?? 0) + cashbackAmount).toFixed(2));
+    await wallet.save();
+
+    await Transaction.create({
+      userId,
+      amount: cashbackAmount,
+      type: "CREDIT",
+      status: "SUCCESS",
+      paymentProvider: "LOYALTY",
+      description: "First order cashback credited",
+      orderId,
+    });
+
+    if (userEmail) {
+      sendFirstOrderCashbackEmail(userEmail, cashbackAmount).catch((err) => {
+        console.error("Failed to send first-order cashback email:", err);
+      });
+    }
+
+    return res.json({
+      message: "First order cashback credited",
+      amount: cashbackAmount,
+      balance: wallet.balance,
+      alreadyCredited: false,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // INTERNAL: Transaction history for admin service
 export const internalTransactions = async (req: Request, res: Response) => {
   if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
@@ -168,6 +231,7 @@ export const internalTransactions = async (req: Request, res: Response) => {
             $or: [
               { paymentProvider: "LOYALTY" },
               { description: { $regex: /^Loyalty bonus/i } },
+              { description: { $regex: /^First order cashback/i } },
             ],
           }
         : {};
@@ -201,6 +265,7 @@ export const internalLoyaltySummary = async (req: Request, res: Response) => {
           $or: [
             { paymentProvider: "LOYALTY" },
             { description: { $regex: /^Loyalty bonus/i } },
+            { description: { $regex: /^First order cashback/i } },
           ],
         },
       },
