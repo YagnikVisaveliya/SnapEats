@@ -20,6 +20,7 @@ import OrderPage from './pages/OrderPage';
 import Wallet from './pages/Wallet';
 import RiderDashboard from './pages/RiderDashboard';
 import Admin from './pages/Admin';
+import ReferAndEarn from './pages/ReferAndEarn';
 
 const App = () => {
   const { user ,loading } = useAppData();
@@ -58,6 +59,7 @@ const App = () => {
             <Route path='/paymentsuccess/:paymentId' element={<PaymentSuccess/>}/>
             <Route path='/order-success' element={<OrderSuccess/>}/>
             <Route path='/wallet' element={<Wallet/>}/>
+            <Route path='/refer-and-earn' element={<ReferAndEarn/>}/>
 
           </Route>
         </Routes>

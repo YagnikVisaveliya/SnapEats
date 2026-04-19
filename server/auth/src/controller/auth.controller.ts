@@ -5,6 +5,31 @@ import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 
 import { oauth2client } from "../config/googleApi.js";
 import axios from 'axios';
+import crypto from 'crypto';
+
+/**
+ * Generate a unique 8-char referral code like "SNAP4X8K"
+ */
+const generateReferralCode = (): string => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/1/I to avoid confusion
+  let suffix = "";
+  for (let i = 0; i < 4; i++) {
+    suffix += chars[crypto.randomInt(chars.length)];
+  }
+  return `SNAP${suffix}`;
+};
+
+/**
+ * Generate a unique referral code, retrying if collision occurs
+ */
+const generateUniqueReferralCode = async (): Promise<string> => {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = generateReferralCode();
+    const existing = await User.findOne({ referralCode: code });
+    if (!existing) return code;
+  }
+  return `SNAP${crypto.randomBytes(4).toString("hex").toUpperCase().slice(0, 6)}`;
+};
 
 export const loginUser = async (req:Request, res:Response) => {
 
@@ -25,7 +50,8 @@ export const loginUser = async (req:Request, res:Response) => {
         let user = await User.findOne({ email });
 
         if (!user) {
-            user = await User.create({ email, name, image: picture });
+            const referralCode = await generateUniqueReferralCode();
+            user = await User.create({ email, name, image: picture, referralCode });
         }
 
         const token = jwt.sign({user}, process.env.JWT_SECRET as string, { expiresIn: '15d' });
@@ -69,10 +95,124 @@ export const addUserRole = async (req:AuthenticatedRequest, res:Response) => {
 }
 
 export const profile = async (req:AuthenticatedRequest, res:Response) => {
-    const user = req.user;
-    if (!user) {
+    const userPayload = req.user;
+    if (!userPayload) {
         return res.status(401).json({ message: "Unauthorized - User not found in request" });
     }
-    res.status(200).json({ user });
-    
+
+    try {
+      const user = await User.findById(userPayload._id);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Backfill referral code for legacy users created before referral rollout.
+      if (!user.referralCode) {
+        user.referralCode = await generateUniqueReferralCode();
+        await user.save();
+      }
+
+      res.status(200).json({ user });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
 }
+
+/**
+ * Apply a referral code
+ */
+export const applyReferralCode = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { referralCode } = req.body;
+    if (!referralCode || typeof referralCode !== "string") {
+      return res.status(400).json({ message: "Referral code is required" });
+    }
+
+    const code = referralCode.trim().toUpperCase();
+
+    const currentUser = await User.findById(userId);
+    if (!currentUser) return res.status(404).json({ message: "User not found" });
+
+    if (currentUser.referredBy) {
+      return res.status(400).json({ message: "You have already applied a referral code" });
+    }
+
+    if (currentUser.referralCode === code) {
+      return res.status(400).json({ message: "You cannot use your own referral code" });
+    }
+
+    const referrer = await User.findOne({ referralCode: code });
+    if (!referrer) return res.status(404).json({ message: "Invalid referral code" });
+
+    currentUser.referredBy = code;
+    await currentUser.save();
+
+    res.json({
+      message: "Referral code applied successfully!",
+      referredBy: code,
+      referrerName: referrer.name,
+    });
+  } catch (error) {
+    console.error("Error applying referral code:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+/**
+ * Get user's referral info
+ */
+export const getReferralInfo = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const user = await User.findById(userId).select("referralCode referredBy name email");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.referralCode) {
+      user.referralCode = await generateUniqueReferralCode();
+      await user.save();
+    }
+
+    res.json({
+      referralCode: user.referralCode,
+      referredBy: user.referredBy,
+      hasAppliedCode: !!user.referredBy,
+    });
+  } catch (error) {
+    console.error("Error fetching referral info:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Internal endpoints for Wallet/Restaurant Services
+export const getInternalUser = async (req: Request, res: Response) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+        const user = await User.findById(req.params.id);
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: "Error" });
+    }
+};
+
+export const getInternalUserByCode = async (req: Request, res: Response) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+        const user = await User.findOne({ referralCode: req.params.code });
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: "Error" });
+    }
+};

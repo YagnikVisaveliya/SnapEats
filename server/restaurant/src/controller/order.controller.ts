@@ -769,6 +769,7 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
       });
 
       if (deliveredCount === 1) {
+        // Trigger First Order Cashback
         await axios.post(
           `${process.env.WALLET_SERVICE_URL}/api/wallet/internal/first-order-cashback`,
           {
@@ -782,6 +783,21 @@ export const updateOrderStatusByRider = async (req: Request, res: Response) => {
             },
           }
         );
+
+        // Trigger Referral Reward
+        await axios.post(
+          `${process.env.WALLET_SERVICE_URL}/api/wallet/internal/referral-reward`,
+          {
+            refereeId: order.userId,
+            refereeEmail: order.userEmail,
+            orderId: order._id,
+          },
+          {
+            headers: {
+              "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+          }
+        ).catch(err => console.error("Failed to trigger referral reward:", err?.response?.data || err.message));
       }
 
       if (deliveredCount > 0 && deliveredCount % 5 === 0) {

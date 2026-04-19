@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import Wallet from "../model/Wallet.model.js";
 import Transaction from "../model/Transaction.model.js";
-import { sendFirstOrderCashbackEmail, sendLoyaltyBonusEmail } from "../utils/mail.js";
+import Referral from "../model/Referral.model.js";
+import { sendFirstOrderCashbackEmail, sendLoyaltyBonusEmail, sendReferralRewardEmail } from "../utils/mail.js";
+import axios from "axios";
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
@@ -210,6 +212,129 @@ export const internalFirstOrderCashback = async (req: Request, res: Response) =>
     });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// INTERNAL: Referral Reward
+export const internalReferralReward = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const { refereeId, refereeEmail, orderId, deviceId } = req.body;
+    
+    if (!refereeId || !orderId) {
+      return res.status(400).json({ message: "refereeId and orderId are required" });
+    }
+
+    // 1. Check if referral reward was already given to this referee
+    const existingReferral = await Referral.findOne({ refereeId });
+    if (existingReferral) {
+      return res.json({ message: "Referral reward already processed for this user", status: "skipped" });
+    }
+
+    const authUrl = process.env.AUTH_SERVICE_URL || "http://localhost:3000";
+    
+    const { data: refereeUser } = await axios.get(`${authUrl}/api/auth/internal/user/${refereeId}`, {
+      headers: { "x-internal-key": process.env.INTERNAL_SERVICE_KEY }
+    });
+
+    if (!refereeUser || !refereeUser.referredBy) {
+      return res.json({ message: "User was not referred by anyone", status: "skipped" });
+    }
+
+    const { data: referrerUser } = await axios.get(`${authUrl}/api/auth/internal/user-by-code/${refereeUser.referredBy}`, {
+      headers: { "x-internal-key": process.env.INTERNAL_SERVICE_KEY }
+    });
+
+    if (!referrerUser) {
+      return res.status(404).json({ message: "Referrer not found" });
+    }
+    
+    const referrerId = referrerUser._id;
+    
+    if (referrerId === refereeId) {
+      return res.status(400).json({ message: "Cannot self-refer" });
+    }
+
+    // Reward Amounts
+    const referrerRewardAmount = 70;
+    const refereeRewardAmount = 50;
+
+    // Credit Referrer
+    let referrerWallet = await Wallet.findOne({ userId: referrerId });
+    if (!referrerWallet) referrerWallet = await Wallet.create({ userId: referrerId, balance: 0 });
+    referrerWallet.balance += referrerRewardAmount;
+    await referrerWallet.save();
+
+    await Transaction.create({
+      userId: referrerId,
+      amount: referrerRewardAmount,
+      type: "CREDIT",
+      status: "SUCCESS",
+      paymentProvider: "REFERRAL",
+      description: `Referral bonus for inviting ${refereeUser.name || 'a friend'}`,
+      orderId,
+    });
+
+    // Credit Referee
+    let refereeWallet = await Wallet.findOne({ userId: refereeId });
+    if (!refereeWallet) refereeWallet = await Wallet.create({ userId: refereeId, balance: 0 });
+    refereeWallet.balance += refereeRewardAmount;
+    await refereeWallet.save();
+
+    await Transaction.create({
+      userId: refereeId,
+      amount: refereeRewardAmount,
+      type: "CREDIT",
+      status: "SUCCESS",
+      paymentProvider: "REFERRAL",
+      description: `Welcome referral bonus via ${referrerUser.name || 'friend'}'s code`,
+      orderId,
+    });
+
+    // Create Referral completion record
+    await Referral.create({
+      referrerId,
+      refereeId,
+      refereeEmail,
+      deviceId: deviceId || null,
+      referrerReward: referrerRewardAmount,
+      refereeReward: refereeRewardAmount,
+      triggeredByOrderId: orderId,
+      status: "completed",
+    });
+
+    // Send Emails asynchronously
+    if (referrerUser.email) {
+      sendReferralRewardEmail(referrerUser.email, referrerRewardAmount, true).catch(e => console.error(e));
+    }
+    if (refereeEmail) {
+      sendReferralRewardEmail(refereeEmail, refereeRewardAmount, false).catch(e => console.error(e));
+    }
+
+    res.json({
+      message: "Referral rewards processed successfully",
+      referrerReward: referrerRewardAmount,
+      refereeReward: refereeRewardAmount,
+    });
+  } catch (error) {
+    console.error("Referral reward error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const internalReferralSummary = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  try {
+    const list = await Referral.find().sort({ createdAt: -1 }).limit(10);
+    const count = await Referral.countDocuments();
+    res.json({ count, recent: list });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

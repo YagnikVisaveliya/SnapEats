@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppContext";
 import toast from "react-hot-toast";
-import { BiLogOut, BiMapPin, BiPackage, BiWallet } from "react-icons/bi";
+import { BiGift, BiLogOut, BiMapPin, BiPackage, BiWallet } from "react-icons/bi";
 
 
 function Account() {
@@ -49,6 +49,13 @@ function Account() {
           >
             <BiMapPin className="h-5 w-5 text-red-500" />
             <span className="font-medium">Addresses</span>
+          </div>
+          <div
+            className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
+            onClick={() => navigate("/refer-and-earn")}
+          >
+            <BiGift className="h-5 w-5 text-red-500" />
+            <span className="font-medium">Refer and Earn</span>
           </div>
           <div
             className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"

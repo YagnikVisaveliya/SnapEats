@@ -35,7 +35,7 @@ const transactionSchema: Schema<ITransaction> = new Schema(
     },
     paymentProvider: {
       type: String,
-      enum: ["WALLET", "LOYALTY", "RAZORPAY", "STRIPE"],
+      enum: ["WALLET", "LOYALTY", "RAZORPAY", "STRIPE", "REFERRAL"],
     },
     description: {
       type: String,

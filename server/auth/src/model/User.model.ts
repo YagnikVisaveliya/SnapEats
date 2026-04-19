@@ -5,6 +5,8 @@ export interface IUser extends Document {
   email: string;
   image: string;
   role: string;
+  referralCode?: string;
+  referredBy?: string | null;
 }
 
 const schema: Schema<IUser> = new Schema(
@@ -23,6 +25,15 @@ const schema: Schema<IUser> = new Schema(
       required: true,
     },
     role: {
+      type: String,
+      default: null,
+    },
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    referredBy: {
       type: String,
       default: null,
     },

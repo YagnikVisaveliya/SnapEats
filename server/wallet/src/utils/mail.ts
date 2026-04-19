@@ -114,3 +114,67 @@ export const sendFirstOrderCashbackEmail = async (to: string, amount: number) =>
     return false;
   }
 };
+
+/**
+ * Sends referral reward email to the user
+ * @param to User email address
+ * @param amount Reward amount credited
+ * @param isReferrer Whether the user is the referrer or referee
+ */
+export const sendReferralRewardEmail = async (to: string, amount: number, isReferrer: boolean) => {
+  try {
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (!smtpUser || !smtpPass) {
+      console.warn("⚠️ SMTP credentials missing for referral emails.");
+      return false;
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === "true",
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+
+    const subject = isReferrer
+      ? "Your friend completed their order! Here's your reward - SnapEats"
+      : "Welcome to the club! Here is your referral bonus - SnapEats";
+
+    const headline = isReferrer
+      ? "Your friend had their first meal!"
+      : "You've successfully used a friend's referral code!";
+      
+    const message = isReferrer
+      ? "Thanks for spreading the word. Since your invited friend completed their first order, we've credited your wallet."
+      : "Thanks for trying out SnapEats. Below is your special invite bonus credited directly to your wallet.";
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || `"SnapEats" <${smtpUser}>`,
+      to,
+      subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <h2 style="color: #4cd137; text-align: center;">${headline}</h2>
+          <p>Hi there,</p>
+          <p>${message}</p>
+          <div style="background-color: #f1f2f6; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+            <p style="margin: 0; font-size: 14px; color: #57606f;">Wallet Bonus Credited:</p>
+            <h1 style="margin: 5px 0; color: #4cd137;">₹${amount}</h1>
+          </div>
+          <p>You can use this wallet balance towards your next delicious order.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 12px; color: #a4b0be; text-align: center;">Keep ordering, keep earning!<br>© 2026 SnapEats Team</p>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Referral email sent to ${to}. MessageID: ${info.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to send referral email to ${to}:`, error);
+    return false;
+  }
+};
