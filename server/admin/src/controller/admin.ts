@@ -170,13 +170,29 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
             loyaltyPayout = 0;
         }
 
-        const totalRevenue = grossRevenue - loyaltyPayout;
+        let referralPayout = 0;
+        try {
+            const { data: referralSummary } = await axios.get(
+                `${getWalletServiceBaseUrl()}/api/wallet/internal/referral-payout-summary`,
+                {
+                    headers: {
+                        "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+                    },
+                },
+            );
+            referralPayout = Number(referralSummary?.totalReferralReward ?? 0);
+        } catch (walletError) {
+            referralPayout = 0;
+        }
+
+        const totalRevenue = grossRevenue - loyaltyPayout - referralPayout;
 
     res.json({
-      totalRevenue,
-      netRevenue: totalRevenue,
-      grossRevenue,
-      loyaltyPayout,
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      netRevenue: Number(totalRevenue.toFixed(2)),
+      grossRevenue: Number(grossRevenue.toFixed(2)),
+      loyaltyPayout: Number(loyaltyPayout.toFixed(2)),
+      referralPayout: Number(referralPayout.toFixed(2)),
       totalOrders,
     });
     } catch (error: any) {

@@ -10,6 +10,7 @@ import {
 	internalLoyaltySummary,
 	internalReferralReward,
 	internalReferralSummary,
+	internalReferralPayoutSummary,
 } from "../controller/wallet.controller.js";
 import { isAuth } from "../middleware/isAuth.middleware.js";
 
@@ -28,5 +29,6 @@ router.post("/internal/referral-reward", internalReferralReward);
 router.get("/internal/transactions", internalTransactions);
 router.get("/internal/loyalty-summary", internalLoyaltySummary);
 router.get("/internal/referral-summary", internalReferralSummary);
+router.get("/internal/referral-payout-summary", internalReferralPayoutSummary);
 
 export default router;

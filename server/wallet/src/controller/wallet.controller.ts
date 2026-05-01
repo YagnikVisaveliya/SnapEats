@@ -413,3 +413,32 @@ export const internalLoyaltySummary = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+// INTERNAL: Summarize referral rewards for net revenue calculation
+export const internalReferralPayoutSummary = async (req: Request, res: Response) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const result = await Referral.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalReferralReward: { 
+            $sum: { $add: ["$referrerReward", "$refereeReward"] } 
+          },
+          totalReferralTransactions: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const summary = result[0] ?? {
+      totalReferralReward: 0,
+      totalReferralTransactions: 0,
+    };
+
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

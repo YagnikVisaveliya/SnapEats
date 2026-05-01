@@ -978,4 +978,22 @@ export const allOrders = async (req: AuthenticatedRequest, res: Response) => {
     console.error("Error fetching all orders:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
+
+export const internalUserOrderCount = async (req: Request, res: Response) => {
+    if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+        return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+        const { userId } = req.params;
+        if (!userId) return res.status(400).json({ message: "userId is required" });
+
+        const count = await Order.countDocuments({ 
+            userId: String(userId),
+            paymentStatus: "paid"
+        });
+        res.json({ count });
+    } catch (err) {
+        res.status(500).json({ message: "Error" });
+    }
+};

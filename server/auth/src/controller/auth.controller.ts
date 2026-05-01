@@ -181,10 +181,25 @@ export const getReferralInfo = async (req: AuthenticatedRequest, res: Response) 
       await user.save();
     }
 
+    let orderCount = 0;
+    try {
+      const restaurantUrl = process.env.RESTAURANT_SERVICE || "http://localhost:3001";
+      const { data } = await axios.get(
+        `${restaurantUrl}/api/order/internal/user-order-count/${String(userId)}`,
+        {
+          headers: { "x-internal-key": process.env.INTERNAL_SERVICE_KEY }
+        }
+      );
+      orderCount = data.count ?? 0;
+    } catch (err) {
+      console.error("Failed to fetch order count for referral info:", err);
+    }
+
     res.json({
       referralCode: user.referralCode,
       referredBy: user.referredBy,
       hasAppliedCode: !!user.referredBy,
+      isEligibleToApply: !user.referredBy && orderCount === 0,
     });
   } catch (error) {
     console.error("Error fetching referral info:", error);

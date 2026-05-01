@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAppData } from "../context/AppContext";
 import toast from "react-hot-toast";
-import { BiGift, BiCopy, BiCheckCircle, BiInfoCircle, BiShareAlt } from "react-icons/bi";
+import { BiGift, BiCopy, BiCheckCircle, BiInfoCircle } from "react-icons/bi";
 import { motion } from "framer-motion";
 
 const ReferAndEarn = () => {
-    const { user } = useAppData();
     const [referralInfo, setReferralInfo] = useState<{
         referralCode: string;
         referredBy: string | null;
         hasAppliedCode: boolean;
+        isEligibleToApply: boolean;
     } | null>(null);
     const [referralCodeInput, setReferralCodeInput] = useState("");
     const [loading, setLoading] = useState(true);
@@ -128,7 +128,7 @@ const ReferAndEarn = () => {
                     </motion.div>
 
                     {/* Apply Section */}
-                    {!referralInfo?.hasAppliedCode ? (
+                    {referralInfo?.isEligibleToApply ? (
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -155,7 +155,7 @@ const ReferAndEarn = () => {
                                 </button>
                             </div>
                         </motion.div>
-                    ) : (
+                    ) : referralInfo?.hasAppliedCode ? (
                         <motion.div 
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -167,6 +167,17 @@ const ReferAndEarn = () => {
                             <div>
                                 <h3 className="font-bold">Referral program active!</h3>
                                 <p className="text-sm opacity-90">Applied friend's code: <span className="font-bold">{referralInfo.referredBy}</span></p>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="rounded-3xl bg-orange-50 p-6 text-orange-700 ring-1 ring-orange-200"
+                        >
+                            <div className="flex items-center gap-3">
+                                <BiInfoCircle className="h-6 w-6" />
+                                <p className="text-sm font-medium">The referral invitation period for your account has ended. Referral codes must be applied before placing your first order.</p>
                             </div>
                         </motion.div>
                     )}
