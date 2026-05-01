@@ -178,39 +178,107 @@ const Orders = () => {
       <h1 className="text-2xl font-bold">My Orders</h1>
 
       {smartReorderOrders.length > 0 && (
-        <section className="space-y-3 rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
-          <div className="flex items-center justify-between gap-3">
+        // <section className="space-y-3 rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+        //   <div className="flex items-center justify-between gap-3">
+        //     <div>
+        //       <h2 className="text-lg font-semibold text-slate-900">Quick Reorder</h2>
+        //       <p className="text-sm text-slate-600">Based on your recent delivered orders and current time</p>
+        //     </div>
+        //     <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-rose-600 shadow-sm">
+        //       <FiClock />
+        //       Smart picks
+        //     </span>
+        //   </div>
+
+        //   <div className="grid gap-3 md:grid-cols-3">
+        //     {smartReorderOrders.map((order) => (
+        //       <div key={`quick-${order._id}`} className="rounded-xl border border-white bg-white p-3 shadow-sm">
+        //         <p className="text-sm font-semibold text-slate-900">{order.restaurantName || `Order #${order._id.slice(-6)}`}</p>
+        //         <p className="mt-1 line-clamp-2 text-xs text-slate-600">
+        //           {order.items.slice(0, 3).map((item) => `${item.name} x ${item.quantity}`).join(", ")}
+        //         </p>
+        //         <p className="mt-2 text-sm font-bold text-slate-900">₹{order.totalAmount}</p>
+
+        //         <button
+        //           onClick={() => reorderAndCheckout(order)}
+        //           disabled={reorderingOrderId === order._id}
+        //           className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#E23744] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#c92f3c] disabled:cursor-not-allowed disabled:opacity-70"
+        //         >
+        //           <FiShoppingBag />
+        //           {reorderingOrderId === order._id ? "Adding..." : "Reorder & Checkout"}
+        //         </button>
+        //       </div>
+        //     ))}
+        //   </div>
+        // </section>
+         <section className="space-y-3 rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Quick Reorder
+          </h2>
+          <p className="text-sm text-slate-600">
+            Based on your recent delivered orders and current time
+          </p>
+        </div>
+
+        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-rose-600 shadow-sm">
+          <FiClock />
+          Smart picks
+        </span>
+      </div>
+
+      {/* Grid */}
+      <div className="grid gap-3 md:grid-cols-3 items-stretch">
+        {smartReorderOrders.map((order) => (
+          
+          <div
+            key={`quick-${order._id}`}
+            className="flex h-full flex-col justify-between rounded-xl border border-white bg-white p-3 shadow-sm"
+          >
+            
+            {/* TOP CONTENT */}
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Quick Reorder</h2>
-              <p className="text-sm text-slate-600">Based on your recent delivered orders and current time</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {order.restaurantName ||
+                  `Order #${order._id.slice(-6)}`}
+              </p>
+
+              <p className="mt-1 line-clamp-2 text-xs text-slate-600">
+                {order.items
+                  .slice(0, 3)
+                  .map(
+                    (item) =>
+                      `${item.name} x ${item.quantity}`
+                  )
+                  .join(", ")}
+              </p>
             </div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-rose-600 shadow-sm">
-              <FiClock />
-              Smart picks
-            </span>
+
+            {/* BOTTOM (ALWAYS ALIGNED) */}
+            <div className="mt-3">
+              <p className="text-sm font-bold text-slate-900">
+                ₹{order.totalAmount}
+              </p>
+
+              <button
+                onClick={() => reorderAndCheckout(order)}
+                disabled={reorderingOrderId === order._id}
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#E23744] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#c92f3c] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <FiShoppingBag />
+                {reorderingOrderId === order._id
+                  ? "Adding..."
+                  : "Reorder & Checkout"}
+              </button>
+            </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
-            {smartReorderOrders.map((order) => (
-              <div key={`quick-${order._id}`} className="rounded-xl border border-white bg-white p-3 shadow-sm">
-                <p className="text-sm font-semibold text-slate-900">{order.restaurantName || `Order #${order._id.slice(-6)}`}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-slate-600">
-                  {order.items.slice(0, 3).map((item) => `${item.name} x ${item.quantity}`).join(", ")}
-                </p>
-                <p className="mt-2 text-sm font-bold text-slate-900">₹{order.totalAmount}</p>
-
-                <button
-                  onClick={() => reorderAndCheckout(order)}
-                  disabled={reorderingOrderId === order._id}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#E23744] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#c92f3c] disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  <FiShoppingBag />
-                  {reorderingOrderId === order._id ? "Adding..." : "Reorder & Checkout"}
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
+        ))}
+      </div>
+    </section>
       )}
 
       <section className="space-y-3">
