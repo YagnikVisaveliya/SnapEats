@@ -30,6 +30,11 @@ const CheckOut = () => {
   const [loadingWallet, setLoadingWallet] = useState(true);
   const [useWallet, setUseWallet] = useState(true);
 
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
+  const [loadingCoupon, setLoadingCoupon] = useState(false);
+
   const getDistanceKm = (
     lat1: number,
     lon1: number,
@@ -136,7 +141,7 @@ const CheckOut = () => {
 
   const platformFee = totalPrice * 0.08;
 
-  const grandTotal = totalPrice + deliveryFee + platformFee;
+  const grandTotal = totalPrice + deliveryFee + platformFee - couponDiscount;
   const hasWalletBalance = walletBalance > 0;
   const walletApplied = useWallet ? Math.min(walletBalance, grandTotal) : 0;
   const payableAmount = Math.max(0, grandTotal - walletApplied);
@@ -169,6 +174,7 @@ const CheckOut = () => {
           paymentMethod,
           addressId: selectedAddressId,
           useWallet,
+          couponCode: appliedCoupon,
         },
         {
           headers: {
@@ -246,6 +252,34 @@ const CheckOut = () => {
       toast.error("Payment Failed please refresh page");
     } finally {
       setLoadingRazorpay(false);
+    }
+  };
+
+  const applyCoupon = async () => {
+    if (!couponCodeInput.trim()) return;
+    setLoadingCoupon(true);
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_RESTAURANT_SERVICE_URL}/api/coupon/apply`,
+        {
+          code: couponCodeInput.trim(),
+          subTotal: totalPrice,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setAppliedCoupon(data.couponCode);
+      setCouponDiscount(data.discountAmount);
+      toast.success(data.message || "Coupon applied!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Invalid coupon code");
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+    } finally {
+      setLoadingCoupon(false);
     }
   };
 
@@ -399,6 +433,12 @@ const CheckOut = () => {
                 <span>Platform Fee</span>
                 <span>₹{platformFee.toFixed(2)}</span>
               </div>
+              {couponDiscount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Coupon Discount</span>
+                  <span className="text-emerald-600">-₹{couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
               {hasWalletBalance && (
                 <div className="flex justify-between text-sm">
                   <span>Wallet Used</span>
@@ -430,6 +470,40 @@ const CheckOut = () => {
               </label>
             </div>
           )}
+
+          <div className="rounded-xl border bg-white p-5 shadow-sm">
+            <h3 className="text-xl font-semibold">Apply Coupon</h3>
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Enter coupon code"
+                value={couponCodeInput}
+                onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 uppercase"
+                disabled={appliedCoupon !== null}
+              />
+              {appliedCoupon ? (
+                <button
+                  onClick={() => {
+                    setAppliedCoupon(null);
+                    setCouponDiscount(0);
+                    setCouponCodeInput("");
+                  }}
+                  className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300"
+                >
+                  Remove
+                </button>
+              ) : (
+                <button
+                  onClick={applyCoupon}
+                  disabled={loadingCoupon || !couponCodeInput.trim()}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loadingCoupon ? <BiLoader className="animate-spin" /> : "Apply"}
+                </button>
+              )}
+            </div>
+          </div>
 
           <div className="rounded-xl border bg-white p-5 shadow-sm">
             <h3 className="text-xl font-semibold">Payment</h3>

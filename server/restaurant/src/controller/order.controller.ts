@@ -7,6 +7,7 @@ import { IManu } from "../model/manu.model.js";
 import { Order } from "../model/order.model.js";
 import axios from "axios";
 import { publishEvent } from "../config/order.pubplisher.js";
+import { Coupon } from "../model/coupon.model.js";
 
 export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   const user = req.user;
@@ -14,7 +15,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const { paymentMethod, addressId, useWallet } = req.body;
+  const { paymentMethod, addressId, useWallet, couponCode } = req.body;
 
   if (!addressId) {
     return res.status(400).json({ message: "address ID are required" });
@@ -96,9 +97,33 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     };
   });
 
+  let couponDiscount = 0;
+  if (couponCode) {
+    const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+    if (
+      coupon &&
+      coupon.isActive &&
+      new Date() <= new Date(coupon.expiryDate) &&
+      (coupon.usageLimit === 0 || coupon.usedCount < coupon.usageLimit) &&
+      subTotal >= coupon.minOrderValue
+    ) {
+      if (coupon.discountType === "PERCENTAGE") {
+        couponDiscount = (subTotal * coupon.discountValue) / 100;
+        if (coupon.maxDiscount && couponDiscount > coupon.maxDiscount) {
+          couponDiscount = coupon.maxDiscount;
+        }
+      } else {
+        couponDiscount = coupon.discountValue;
+      }
+      couponDiscount = Math.min(couponDiscount, subTotal);
+    } else {
+      return res.status(400).json({ message: "Invalid or expired coupon code" });
+    }
+  }
+
   const deliveryFee = subTotal > 150 ? 0 : distance < 2 ? 24 : distance * 12;
   const platformFee = subTotal * 0.08; // 8% of total price
-  const totalAmount = subTotal + deliveryFee + platformFee;
+  const totalAmount = subTotal + deliveryFee + platformFee - couponDiscount;
 
   const expireAt = new Date(Date.now() + 15 * 60 * 1000);
   const [longitude, latitude] = address.location.coordinates;
@@ -145,6 +170,8 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     deliveryCharge: deliveryFee,
     platformCharge: platformFee,
     totalAmount,
+    couponCode: couponDiscount > 0 ? couponCode.toUpperCase() : undefined,
+    couponDiscount,
     walletUsed,
     payableAmount,
     addressId: address._id.toString(),
@@ -163,6 +190,13 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   });
 
   await Cart.deleteMany({ userId: user._id });
+
+  if (couponDiscount > 0 && couponCode) {
+    await Coupon.findOneAndUpdate(
+      { code: couponCode.toUpperCase() },
+      { $inc: { usedCount: 1 } }
+    );
+  }
 
   res.status(201).json({
     message: "Order created successfully",

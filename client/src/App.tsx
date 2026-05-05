@@ -21,6 +21,7 @@ import Wallet from './pages/Wallet';
 import RiderDashboard from './pages/RiderDashboard';
 import Admin from './pages/Admin';
 import ReferAndEarn from './pages/ReferAndEarn';
+import OfferAndDiscount from './pages/OfferAndDiscount';
 
 const App = () => {
   const { user ,loading } = useAppData();
@@ -60,6 +61,7 @@ const App = () => {
             <Route path='/order-success' element={<OrderSuccess/>}/>
             <Route path='/wallet' element={<Wallet/>}/>
             <Route path='/refer-and-earn' element={<ReferAndEarn/>}/>
+            <Route path='/offers' element={<OfferAndDiscount/>}/>
 
           </Route>
         </Routes>

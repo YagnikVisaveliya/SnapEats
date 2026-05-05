@@ -28,6 +28,7 @@ import manuItemRoutes from './router/manuItem.route.js';
 import cartRoutes from './router/cart.route.js';
 import addressRoutes from './router/address.route.js';
 import orderrouter from './router/order.route.js';
+import couponRoutes from './router/coupon.route.js';
 import { connectRabbitMQ } from './config/rabbitmq.js';
 import { startPaymentConsumer } from './config/payment.consumer.js';
 
@@ -36,6 +37,7 @@ app.use("/api/item", manuItemRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/order", orderrouter);
+app.use("/api/coupon", couponRoutes);
 
 
 app.listen(process.env.PORT || 3001, () => {

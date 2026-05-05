@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { Response } from 'express';
+import { disconnect } from 'mongoose';
 
 const getWalletServiceBaseUrl = () =>
     process.env.WALLET_SERVICE_URL || process.env.WALLET_SERVICE || "http://localhost:3007";
@@ -134,6 +135,7 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
 
         let grossRevenue = 0;
         let totalOrders = 0;
+        let couponSponsorship = 0;
 
         orders.forEach((order: any) => {
             if (order.paymentStatus !== "paid") return;
@@ -147,11 +149,14 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
 
             const commission = subTotal * 0.13;
             const deliveryMargin = deliveryCharge - riderEarning;
+            const couponDiscount = Number(order.couponDiscount ?? 0);
 
             grossRevenue +=
                 commission +
                 platformCharge +
                 deliveryMargin;
+            
+            couponSponsorship += couponDiscount;
         });
 
         let loyaltyPayout = 0;
@@ -185,7 +190,7 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
             referralPayout = 0;
         }
 
-        const totalRevenue = grossRevenue - loyaltyPayout - referralPayout;
+        const totalRevenue = grossRevenue - loyaltyPayout - referralPayout - couponSponsorship;
 
     res.json({
       totalRevenue: Number(totalRevenue.toFixed(2)),
@@ -193,6 +198,7 @@ export const getTotalRevenue = async (req: AuthenticatedRequest, res: Response) 
       grossRevenue: Number(grossRevenue.toFixed(2)),
       loyaltyPayout: Number(loyaltyPayout.toFixed(2)),
       referralPayout: Number(referralPayout.toFixed(2)),
+      couponSponsorship: Number(couponSponsorship.toFixed(2)),
       totalOrders,
     });
     } catch (error: any) {
@@ -260,4 +266,71 @@ export const getTopRestaurants = async (req: AuthenticatedRequest, res: Response
     res.status(500).json({ message: "Failed to get top restaurants" });
   }
 };
+
+export const getCoupons = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE}/api/coupon/internal/all`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+        });
+        res.json(data);
+    } catch (error: any) {
+        res.status(500).json({ message: "Failed to fetch coupons" });
+    }
+}
+
+export const getCouponsForUser = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.get(`${process.env.RESTAURANT_SERVICE}/api/coupon/internal/all`, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+        });
+        const filteredCoupons = data.coupons.map((coupon: any) => ({
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+            minOrderValue: coupon.minOrderValue,
+            expiryDate: coupon.expiryDate,
+            isActive: coupon.isActive,
+        }));
+        res.json({ success: true, coupons: filteredCoupons });
+        
+    } catch (error: any) {
+        res.status(500).json({ message: "Failed to fetch coupons" });
+    }
+}
+
+export const createCoupon = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { data } = await axios.post(`${process.env.RESTAURANT_SERVICE}/api/coupon/internal/create`, req.body, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+        });
+        res.json(data);
+    } catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to create coupon";
+        res.status(status).json({ message });
+    }
+}
+
+
+export const updateCoupon = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { data } = await axios.put(`${process.env.RESTAURANT_SERVICE}/api/coupon/internal/${id}`, req.body, {
+            headers: {
+                "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+            },
+        });
+        res.json(data);
+    } catch (error: any) {
+        const status = error?.response?.status ?? 500;
+        const message = error?.response?.data?.message ?? "Failed to update coupon";
+        res.status(status).json({ message });
+    }
+}
 

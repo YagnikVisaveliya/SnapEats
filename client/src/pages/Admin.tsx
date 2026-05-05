@@ -13,6 +13,7 @@ const ADMIN_THEME_STORAGE_KEY = "snapEats-admin-theme";
 const Admin = () => {
   const { setUser, setIsAuth } = useAppData();
   const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [unverifiedRestaurants, setUnverifiedRestaurants] = useState<any[]>([]);
   const [riders, setRiders] = useState<any[]>([]);
@@ -40,7 +41,7 @@ const Admin = () => {
     (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
   );
   const [tab, setTab] = useState<
-    "overview" | "restaurants" | "unverifiedRestaurants" | "riders" | "unverifiedRiders" | "orders" | "analytics" | "transactions"
+    "overview" | "restaurants" | "unverifiedRestaurants" | "riders" | "unverifiedRiders" | "orders" | "analytics" | "transactions" | "coupons"
   >("overview");
   const themeStyles = adminThemeStyles[theme];
 
@@ -75,6 +76,7 @@ const Admin = () => {
         revenueRes,
         topRestaurantsRes,
         walletTransactionsRes,
+        couponsRes,
       ] = await Promise.all([
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/restaurants`, authHeader),
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/restaurants/unverified`, authHeader),
@@ -84,6 +86,7 @@ const Admin = () => {
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/revenue`, authHeader),
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/top-restaurants`, authHeader),
         axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/wallet-transactions`, authHeader),
+        axios.get(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/coupons`, authHeader),
       ]);
 
       setRestaurants(normalizeList(restaurantsRes.data, "restaurants"));
@@ -100,6 +103,7 @@ const Admin = () => {
       });
       setTopRestaurants(Array.isArray(topRestaurantsRes.data) ? topRestaurantsRes.data : []);
       setWalletTransactions(normalizeList(walletTransactionsRes.data, "transactions"));
+      setCoupons(normalizeList(couponsRes.data, "coupons"));
     } catch (error) {
       console.log(error);
       toast.error("Failed to load admin dashboard data");
@@ -266,6 +270,7 @@ const Admin = () => {
               { key: "orders", label: `All Orders (${allOrders.length})` },
               { key: "analytics", label: "Revenue & Top Restaurants" },
               { key: "transactions", label: `Transactions (${walletTransactions.length})` },
+              { key: "coupons", label: `Coupons (${coupons.length})` },
             ].map((item) => (
               <button
                 key={item.key}
@@ -529,6 +534,134 @@ const Admin = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {tab === "coupons" && (
+          <div className="space-y-6">
+            <div className={`rounded-2xl border p-5 ${themeStyles.surface}`}>
+              <h2 className={`text-lg font-bold ${themeStyles.primaryText}`}>Create New Coupon</h2>
+              <form
+                className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const data = {
+                    code: (form.elements.namedItem("code") as HTMLInputElement).value,
+                    discountType: (form.elements.namedItem("discountType") as HTMLSelectElement).value,
+                    discountValue: Number((form.elements.namedItem("discountValue") as HTMLInputElement).value),
+                    minOrderValue: Number((form.elements.namedItem("minOrderValue") as HTMLInputElement).value),
+                    maxDiscount: Number((form.elements.namedItem("maxDiscount") as HTMLInputElement).value) || null,
+                    expiryDate: (form.elements.namedItem("expiryDate") as HTMLInputElement).value,
+                    usageLimit: Number((form.elements.namedItem("usageLimit") as HTMLInputElement).value) || 0,
+                  };
+                  try {
+                    await axios.post(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/coupon`, data, authHeader);
+                    toast.success("Coupon created successfully");
+                    form.reset();
+                    fetchAdminData();
+                  } catch (error: any) {
+                    toast.error(error.response?.data?.message || "Failed to create coupon");
+                  }
+                }}
+              >
+                <div>
+                  <label className={`block text-xs font-semibold ${themeStyles.secondaryText}`}>Code</label>
+                  <input required name="code" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${themeStyles.inputSurface}`} placeholder="e.g. FESTIVE50" />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold ${themeStyles.secondaryText}`}>Type</label>
+                  <select required name="discountType" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${themeStyles.inputSurface}`}>
+                    <option value="PERCENTAGE">Percentage</option>
+                    <option value="FLAT">Flat Amount</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold ${themeStyles.secondaryText}`}>Value</label>
+                  <input required type="number" name="discountValue" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${themeStyles.inputSurface}`} placeholder="e.g. 50" />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold ${themeStyles.secondaryText}`}>Min Order</label>
+                  <input required type="number" name="minOrderValue" defaultValue="0" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${themeStyles.inputSurface}`} />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold ${themeStyles.secondaryText}`}>Max Discount (for %)</label>
+                  <input type="number" name="maxDiscount" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${themeStyles.inputSurface}`} placeholder="Leave empty if none" />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold ${themeStyles.secondaryText}`}>Usage Limit</label>
+                  <input type="number" name="usageLimit" defaultValue="0" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${themeStyles.inputSurface}`} placeholder="0 for unlimited" />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold ${themeStyles.secondaryText}`}>Expiry Date</label>
+                  <input required type="date" name="expiryDate" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${themeStyles.inputSurface}`} />
+                </div>
+                <div className="flex items-end">
+                  <button type="submit" className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition">
+                    Create Coupon
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className={`rounded-2xl border p-5 ${themeStyles.surface}`}>
+              <h2 className={`text-lg font-bold ${themeStyles.primaryText}`}>Existing Coupons</h2>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className={`border-b text-xs uppercase tracking-widest ${themeStyles.tableHead}`}>
+                      <th className="px-2 py-3">Code</th>
+                      <th className="px-2 py-3">Type</th>
+                      <th className="px-2 py-3">Value</th>
+                      <th className="px-2 py-3">Usage</th>
+                      <th className="px-2 py-3">Expiry</th>
+                      <th className="px-2 py-3 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coupons.map((c) => (
+                      <tr key={c._id} className={`border-b ${themeStyles.tableRow}`}>
+                        <td className={`px-2 py-3 font-bold ${themeStyles.primaryText}`}>{c.code}</td>
+                        <td className={`px-2 py-3 text-xs ${themeStyles.secondaryText}`}>{c.discountType}</td>
+                        <td className={`px-2 py-3 font-semibold ${themeStyles.primaryText}`}>
+                          {c.discountType === "FLAT" ? `₹${c.discountValue}` : `${c.discountValue}%`}
+                          {c.maxDiscount ? ` (Max ₹${c.maxDiscount})` : ""}
+                        </td>
+                        <td className={`px-2 py-3 text-xs ${themeStyles.secondaryText}`}>
+                          {c.usedCount} / {c.usageLimit === 0 ? "∞" : c.usageLimit}
+                        </td>
+                        <td className={`px-2 py-3 text-xs ${themeStyles.mutedText}`}>
+                          {new Date(c.expiryDate).toLocaleDateString("en-IN")}
+                        </td>
+                        <td className="px-2 py-3 text-right">
+                          <button
+                            onClick={async () => {
+                              try {
+                                await axios.put(`${import.meta.env.VITE_UTILS_ADMIN_URL}/api/admin/coupon/${c._id}`, { isActive: !c.isActive }, authHeader);
+                                fetchAdminData();
+                                toast.success(c.isActive ? "Coupon deactivated" : "Coupon activated");
+                              } catch (e) {
+                                toast.error("Failed to toggle status");
+                              }
+                            }}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${c.isActive ? "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30" : "bg-rose-500/20 text-rose-500 hover:bg-rose-500/30"}`}
+                          >
+                            {c.isActive ? "Active" : "Inactive"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {coupons.length === 0 && (
+                      <tr>
+                        <td className={`px-2 py-6 text-center ${themeStyles.mutedText}`} colSpan={6}>
+                          No coupons found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

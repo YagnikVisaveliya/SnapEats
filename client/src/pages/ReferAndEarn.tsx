@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useAppData } from "../context/AppContext";
 import toast from "react-hot-toast";
 import { BiGift, BiCopy, BiCheckCircle, BiInfoCircle } from "react-icons/bi";
 import { motion } from "framer-motion";

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getallOrders, getAllRestaurants, getAllriders, getTopRestaurants, getTotalRevenue, getunverifiedRestaurants, getunverifiedRiders, getWalletTransactions, verifyRestaurant, verifyRider } from "../controller/admin.js";
+import { getallOrders, getAllRestaurants, getAllriders, getTopRestaurants, getTotalRevenue, getunverifiedRestaurants, getunverifiedRiders, getWalletTransactions, verifyRestaurant, verifyRider, getCoupons, createCoupon, updateCoupon, getCouponsForUser } from "../controller/admin.js";
 import { isAdmin, IsAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -16,6 +16,9 @@ router.route('/all-orders').get(IsAuth,isAdmin,getallOrders);
 router.route('/revenue').get(IsAuth,isAdmin,getTotalRevenue);
 router.route('/top-restaurants').get(IsAuth,isAdmin,getTopRestaurants);
 router.route('/wallet-transactions').get(IsAuth,isAdmin,getWalletTransactions);
-
+router.route('/coupons').get(IsAuth,isAdmin,getCoupons);
+router.route('/coupons/user').get(IsAuth,getCouponsForUser);
+router.route('/coupon').post(IsAuth,isAdmin,createCoupon);
+router.route('/coupon/:id').put(IsAuth,isAdmin,updateCoupon);
 
 export default router;

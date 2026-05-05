@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppContext";
 import toast from "react-hot-toast";
-import { BiGift, BiLogOut, BiMapPin, BiPackage, BiWallet } from "react-icons/bi";
+import { BiGift, BiLogOut, BiMapPin, BiPackage, BiWallet, } from "react-icons/bi";
+import { BiSolidDiscount } from "react-icons/bi";
 
 
 function Account() {
@@ -45,6 +46,13 @@ function Account() {
           </div>
           <div
             className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
+            onClick={() => navigate("/offers")}
+          >
+            <BiSolidDiscount className="h-5 w-5 text-red-500" />
+            <span className="font-medium">Offers and Discounts</span>
+          </div>
+          <div
+            className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
             onClick={() => navigate("/address")}
           >
             <BiMapPin className="h-5 w-5 text-red-500" />
@@ -57,6 +65,7 @@ function Account() {
             <BiGift className="h-5 w-5 text-red-500" />
             <span className="font-medium">Refer and Earn</span>
           </div>
+          
           <div
             className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
             onClick={logoutHandler}
