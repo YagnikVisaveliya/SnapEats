@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import RestaurantProfile from "../components/RestaurantProfile";
 import MenuItems from "../components/MenuItems";
+import RestaurantReviews from "../components/RestaurantReviews";
 import type { IMenuItem, IRestaurant } from "../types";
 
 const RestaurantPage = () => {
@@ -86,6 +87,10 @@ const RestaurantPage = () => {
           items={menuItems}
           onItemDeleted={() => {}}
         />
+      </div>
+
+      <div className="rounded-xl bg-white shadow-sm p-4">
+        <RestaurantReviews restaurantId={id as string} />
       </div>
     </div>
   )

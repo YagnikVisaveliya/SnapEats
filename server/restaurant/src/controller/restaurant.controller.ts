@@ -183,16 +183,42 @@ export const getnearbyRestaurants = async (req: AuthenticatedRequest, res: Respo
                 }, 
             },
             {
-                $sort: {
-                    isOpen: -1,
-                    distance: 1,
+                $lookup: {
+                    from: "favorites",
+                    let: { restId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$restaurantId", "$$restId"] },
+                                        { $eq: ["$userId", req.user ? req.user._id : null] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "favoriteData"
                 }
             },
             {
                 $addFields: {
-                    distanceKm:{ 
+                    isFavorite: { $gt: [{ $size: "$favoriteData" }, 0] },
+                    distanceKm: { 
                         $round: [{ $divide: ["$distance", 1000] }, 2]
                     }
+                }
+            },
+            {
+                $project: {
+                    favoriteData: 0
+                }
+            },
+            {
+                $sort: {
+                    isFavorite: -1,
+                    isOpen: -1,
+                    distance: 1,
                 }
             }
         ]);

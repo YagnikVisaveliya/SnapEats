@@ -46,7 +46,22 @@ export interface IRestaurant {
     formattedAddress: string;
   };
   isOpen: boolean;
+  isFavorite?: boolean;
+  rating?: number;
+  numReviews?: number;
   createdAt: Date;
+}
+
+export interface IReview {
+  _id: string;
+  userId: string;
+  userName: string;
+  userImage?: string;
+  restaurantId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IMenuItem {

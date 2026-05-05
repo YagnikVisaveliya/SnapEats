@@ -100,6 +100,9 @@ const Home = () => {
                 image={res.image ?? ""}
                 distance={`${distance}`}
                 isOpen={res.isOpen}
+                isFavorite={res.isFavorite}
+                rating={res.rating}
+                numReviews={res.numReviews}
               />
             );
           })}
