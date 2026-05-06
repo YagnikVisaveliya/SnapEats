@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  auth:
+    image: yagnik0167/snapeats-auth:tag
+    build:
+      context: ./server/auth
+    ports:
+      - "3000:3000"
+    env_file: ./server/auth/.env
+    restart: always
+
+  restaurant:
+    image: yagnik0167/snapeats-restaurant:latest
+    build:
+      context: ./server/restaurant
+    ports:
+      - "3001:3001"
+    env_file: ./server/restaurant/.env
+    restart: always
+
+  utils:
+    image: yagnik0167/snapeats-utils:latest
+    build:
+      context: ./server/utils
+    ports:
+      - "3003:3003"
+    env_file: ./server/utils/.env
+    restart: always
+
+  realtime:
+    image: yagnik0167/snapeats-realtime:tag
+    build:
+      context: ./server/realtime
+    ports:
+      - "3004:3004"
+    env_file: ./server/realtime/.env
+    restart: always
+
+  rider:
+    image: yagnik0167/snapeats-rider:latest
+    build:
+      context: ./server/rider
+    ports:
+      - "3005:3005"
+    env_file: ./server/rider/.env
+    restart: always
+
+  admin:
+    image: yagnik0167/snapeats-admin:tag
+    build:
+      context: ./server/admin
+    ports:
+      - "3006:3006"
+    env_file: ./server/admin/.env
+    restart: always
+
+  wallet:
+    image: yagnik0167/snapeats-wallet:latest
+    build:
+      context: ./server/wallet
+    ports:
+      - "3007:3007"
+    env_file: ./server/wallet/.env
+    restart: always
+
+  client:
+    image: yagnik0167/snapeats:latest
+    build:
+      context: ./client
+    ports:
+      - "80:80"
+    restart: always
