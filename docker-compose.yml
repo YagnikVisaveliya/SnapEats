@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    restart: always
+
   auth:
     image: yagnik0167/snapeats-auth:tag
     build:
@@ -17,6 +27,8 @@ services:
     ports:
       - "3001:3001"
     env_file: ./server/restaurant/.env
+    depends_on:
+      - rabbitmq
     restart: always
 
   utils:
@@ -24,8 +36,10 @@ services:
     build:
       context: ./server/utils
     ports:
-      - "3003:3003"
+      - "3002:3002"
     env_file: ./server/utils/.env
+    depends_on:
+      - rabbitmq
     restart: always
 
   realtime:
@@ -44,6 +58,8 @@ services:
     ports:
       - "3005:3005"
     env_file: ./server/rider/.env
+    depends_on:
+      - rabbitmq
     restart: always
 
   admin:
@@ -62,6 +78,8 @@ services:
     ports:
       - "3007:3007"
     env_file: ./server/wallet/.env
+    depends_on:
+      - rabbitmq
     restart: always
 
   client:

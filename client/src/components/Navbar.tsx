@@ -3,6 +3,7 @@ import { useAppData } from "../context/AppContext";
 import { useEffect, useState } from "react";
 import { CgShoppingCart } from "react-icons/cg";
 import { BiMapPin, BiSearch } from "react-icons/bi";
+import logo from "../assets/logo.png";
 
 const Navbar = () => {
   const { isAuth, city, quantity } = useAppData();
@@ -31,7 +32,7 @@ const Navbar = () => {
           to={"/"}
           className="text-2xl font-bold text-[#E23744] cursor-pointer"
         >
-            <img src="/src/assets/logo.png" alt="SnapEats Logo" className="h-15 w-15 mr-2 inline-block rounded-4xl" />
+            <img src={logo} alt="SnapEats Logo" className="h-15 w-15 mr-2 inline-block rounded-4xl" />
             Snap<span className="text-gray-500">Eats</span> 
         </Link>
 
