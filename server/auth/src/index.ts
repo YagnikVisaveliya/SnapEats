@@ -15,12 +15,30 @@ app.use(cors({
 app.use(express.json());
 // app.use(express.urlencoded({ extended: true }));
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`Server is running on port ${process.env.PORT}`);
-  connectDB();
+app.use("/api/auth", userRoutes);
+
+app.get("/", (_, res) => {
+  res.send("Auth Server Running");
 });
 
-app.use("/api/auth", userRoutes);
+const PORT = process.env.PORT || 3000;
+
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
+
 
 
 export default app;
