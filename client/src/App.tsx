@@ -25,32 +25,6 @@ import OfferAndDiscount from './pages/OfferAndDiscount';
 import { useEffect } from 'react';
 
 const App = () => {
-  useEffect(() => {
-    // Check if environment is production
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (
-          event.key === 'F12' ||
-          (event.ctrlKey && event.shiftKey && event.key === 'I') ||
-          (event.ctrlKey && event.key === 'U') ||
-          (event.ctrlKey && event.shiftKey && event.key === 'J') ||
-          (event.ctrlKey && event.shiftKey && event.key === 'C')
-        ) {
-          event.preventDefault();
-        }
-      };
-
-      const handleContextMenu = (event: MouseEvent) => {
-        event.preventDefault();
-      };
-
-      document.addEventListener('keydown', handleKeyDown);
-      document.addEventListener('contextmenu', handleContextMenu);
-
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.removeEventListener('contextmenu', handleContextMenu);
-      };
-  }, []);
   const { user ,loading } = useAppData();
 
   if(loading) {
