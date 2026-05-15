@@ -27,8 +27,11 @@ export const startOrderReadyConsumer = async () => {
                     isVerified: true,
                     location: {
                         $near: {
-                            $geometry: location,
-                            $maxDistance: 1000, // 1 km radius
+                            $geometry: {
+                                type: "Point",
+                                coordinates: location.coordinates,
+                            },
+                            $maxDistance: 5000, // 5 km radius
                         }
                     }
                 });

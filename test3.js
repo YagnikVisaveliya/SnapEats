@@ -1,0 +1,1 @@
+﻿const mongoose = require("mongoose"); const s = new mongoose.Schema({ location: { type: { type: String, enum: ["Point"]}, coordinates: [Number] } }); const M = mongoose.model("M", s); const m = new M({location: {type: "Point", coordinates: [1,1]}}); m.location = {type: "Point", coordinates: [2,2]}; console.log(m.modifiedPaths());
