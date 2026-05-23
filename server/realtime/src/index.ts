@@ -21,6 +21,10 @@ app.use("/api/v1/internal", internalRoute);
 const server = http.createServer(app);
 initSocket(server);
 
+app.get("/ping",(req, res) => {
+  res.send("pong");
+});
+
 server.listen(process.env.PORT || 3004, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
 });

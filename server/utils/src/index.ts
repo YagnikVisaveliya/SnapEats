@@ -27,6 +27,10 @@ import paymentRoutes from './routes/payment.router.js';
 app.use("/api", uploadRoutes);
 app.use("/api/payment", paymentRoutes);
 
+app.get("/ping", (req, res) => {
+  res.send("pong");
+});
+
 
 app.listen(process.env.PORT, () => {
   console.log(`Utils service running on port ${process.env.PORT}`);

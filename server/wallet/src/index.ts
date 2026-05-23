@@ -18,6 +18,10 @@ app.use(express.json());
 
 app.use("/api/wallet", walletRoutes);
 
+app.get("/ping", (req, res) => {
+  res.send("pong");
+});
+
 const PORT = process.env.PORT || 3007;
 app.listen(PORT, () => {
   console.log(`Wallet service is running on port ${PORT}`);

@@ -20,6 +20,9 @@ app.use("/api/auth", userRoutes);
 app.get("/", (_, res) => {
   res.send("Auth Server Running");
 });
+app.get("/ping",(req, res) => {
+  res.send("pong");
+});
 
 const PORT = process.env.PORT || 3000;
 

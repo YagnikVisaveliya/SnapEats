@@ -42,6 +42,10 @@ app.use("/api/coupon", couponRoutes);
 app.use("/api/favorite", favoriteRoutes);
 app.use("/api/review", reviewRoutes);
 
+app.get("/ping", (req, res) => {
+  res.send("pong");
+});
+
 app.listen(process.env.PORT || 3001, () => {
   console.log(`Restaurant service is running on port ${process.env.PORT || 3001}`);
   connectDB();

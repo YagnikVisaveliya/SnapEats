@@ -22,6 +22,10 @@ import { startOrderReadyConsumer } from './config/orderReady.consumer.js';
 
 app.use('/api/rider', riderRoutes);
 
+app.get("/ping", (req, res) => {
+  res.send("pong");
+});
+
 app.listen(process.env.PORT || 3005, () => {
   console.log(`Rider service is running on port ${process.env.PORT || 3005}`);
   connectDB();

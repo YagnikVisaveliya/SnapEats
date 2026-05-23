@@ -24,6 +24,10 @@ app.get("/", (_, res) => {
   res.send("Server Running");
 });
 
+app.get("/ping",(req, res) => {
+  res.send("pong");
+});
+
 const PORT = process.env.PORT || 3006;
 
 connectDB();
