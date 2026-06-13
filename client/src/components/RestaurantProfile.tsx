@@ -85,218 +85,148 @@ function RestaurantProfile({ restaurant, isSeller, onUpdate }: Props) {
         toast.success("Logged out successfully");
     }
 
-//   return (
-//     <div className="mx-auto max-w-xl rounded-xl bg-white shadow-sm overflow-hidden">
-//         {
-//             restaurant.image && (
-//                 <img src={restaurant.image} alt="Restaurant" className="w-full h-48 object-cover" />
-//             )
-//         }
-//         <div className="p-5 space-y-4">
-//             {
-//                 isSeller && (<div className="flex items-center justify-between">
-//                     <div>
-//                         {
-//                             editMode ? (
-//                                 <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded border px-2 py-1 text-lg font-semibold"/>
-//                             ) : (
-//                                 <h2 className="text-xl font-semibold">{restaurant.name}</h2>
-//                             )
-//                         }
-//                         <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-//                             <BiMapPin className="h-4 w-4 text-red-500" />
-//                             {
-//                                 restaurant.autoLocation?.formattedAddress || "Location not available"
-//                             }
-
-//                         </div>
-//                     </div>
-//                     <button onClick={()=>setEditMode(!editMode)} className="text-gray-500 hover:text-black">
-//                         <BiEdit size={18} />
-//                     </button>
-//                 </div>
-                
-//             )}
-//             {
-//                 !isSeller && (
-//                     <div>
-//                         <h2 className="text-xl font-semibold">{restaurant.name}</h2>
-//                         <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-//                             <BiMapPin className="h-4 w-4 text-red-500" />
-//                             {
-//                                 restaurant.autoLocation?.formattedAddress || "Location not available"
-//                             }
-//                         </div>
-//                     </div>
-//                 )
-//             }
-//             {
-//                 editMode ? (
-//                     <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded border px-3 py-2 text-sm"/>
-//                 ) : (
-//                     <p className="text-gray-700 text-sm">{restaurant.description || "No description available"}</p>
-//                 )
-//             }
-//             <div className="flex items-center justify-between pt-3 border-t">
-//                 <span className={`text-sm font-medium ${isOpen ? "text-green-600" : "text-red-500"}`}>{isOpen ? "OPEN" : "CLOSED"}</span>
-//                 <div className="flex gap-3">
-//                     {
-//                         editMode && (<button onClick={saveChanges} disabled={loading} className="flex items-center gap-1 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700">
-//                             <BiSave size={16} />
-//                             Save
-//                         </button>
-//                     )}
-//                     {
-//                         isSeller && (
-//                             <button onClick={toggleOpenStatus} className={`rounded-lg px-4 py-1.5 text-sm font-medium text-white cursor-pointer ${isOpen ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}>{
-//                                 isOpen ? "Close Restaurant" : "Open Restaurant"
-//                             }</button>
-//                         )
-//                     }
-//                     {
-//                         isSeller && (
-//                             <button onClick={logoutHandler} className={`rounded-lg px-4 py-1.5 text-sm font-medium cursor-pointer text-white bg-red-600 hover:bg-red-700 "}`}>LogOut</button>
-//                         )
-//                     }
-//                 </div>
-//             </div>
-//             <p className="text-xs text-gray-400">Created on {new Date(restaurant.createdAt).toLocaleDateString()}</p>
-//         </div>
-//     </div>
-//   )
-
 return (
-  <div className="mx-auto max-w-xl overflow-hidden rounded-2xl bg-white shadow-md transition hover:shadow-lg">
-    
-    {/* Image */}
-    {restaurant.image && (
-      <div className="relative">
-        <img
-          src={restaurant.image}
-          alt="Restaurant"
-          className="h-52 w-full object-cover"
-        />
-
-        {/* Status Badge */}
-        <span
-          className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold text-white ${
-            isOpen ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {isOpen ? "OPEN" : "CLOSED"}
-        </span>
-      </div>
-    )}
-
-    {/* Content */}
-    <div className="p-5 space-y-4">
-      
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          
-          {/* Name */}
-          {editMode ? (
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border px-3 py-2 text-lg font-semibold focus:ring-2 focus:ring-orange-500 outline-none"
-            />
-          ) : (
-            <h2 className="text-xl font-bold text-gray-800">
-              {restaurant.name}
-            </h2>
-          )}
-
-          {/* Location */}
-          <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-            <BiMapPin className="h-4 w-4 text-red-500" />
-            {restaurant.autoLocation?.formattedAddress || "Location not available"}
-          </div>
-        </div>
-
-        {/* Edit Button */}
-        {isSeller && (
-          <button
-            onClick={() => setEditMode(!editMode)}
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-black transition"
-          >
-            <BiEdit size={18} />
-          </button>
-        )}
-      </div>
-
-      {/* Description */}
-      {editMode ? (
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-          rows={3}
-        />
+  <div className="mx-auto max-w-3xl overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_24px_80px_-32px_rgba(15,23,42,0.35)] ring-1 ring-black/5">
+    <div className="relative isolate">
+      {restaurant.image ? (
+        <>
+          <img
+            src={restaurant.image}
+            alt={restaurant.name}
+            className="h-64 w-full object-cover sm:h-72"
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(to top, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.2), transparent)" }}
+          />
+        </>
       ) : (
-        <p className="text-sm text-gray-600 leading-relaxed">
-          {restaurant.description || "No description available"}
-        </p>
+        <div
+          className="h-64 w-full sm:h-72"
+          style={{ background: "linear-gradient(to bottom right, #0f172a, #1e293b, #334155)" }}
+        />
       )}
 
-      {/* Divider */}
-      <div className="border-t pt-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-4 text-white">
+          <div className="space-y-2">
+            <span
+              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] ${
+                isOpen ? "bg-emerald-500/90 text-white" : "bg-rose-500/90 text-white"
+              }`}
+            >
+              {isOpen ? "Open now" : "Closed"}
+            </span>
+            {editMode ? (
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full max-w-xl rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-2xl font-black tracking-tight text-white placeholder:text-white/60 outline-none backdrop-blur focus:ring-2 focus:ring-white/40"
+              />
+            ) : (
+              <h2 className="max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
+                {restaurant.name}
+              </h2>
+            )}
+            <div className="flex flex-wrap items-center gap-3 text-sm text-white/85">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur">
+                <BiMapPin className="h-4 w-4" />
+                {restaurant.autoLocation?.formattedAddress || "Location not available"}
+              </span>
+              <span className="rounded-full bg-white/10 px-3 py-1 backdrop-blur">
+                Created {new Date(restaurant.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
 
-        {/* Status Text */}
-        <span
-          className={`text-sm font-semibold ${
-            isOpen ? "text-green-600" : "text-red-500"
-          }`}
+          {isSeller && (
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className="inline-flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+            >
+              <BiEdit size={16} />
+              {editMode ? "Done" : "Edit profile"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div className="space-y-6 p-5 sm:p-6">
+      <div className="grid gap-4 md:grid-cols-[1.4fr_0.9fr]">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">About</p>
+          {editMode ? (
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="min-h-28 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-100"
+              rows={4}
+            />
+          ) : (
+            <p className="text-sm leading-7 text-slate-600">
+              {restaurant.description || "No description available"}
+            </p>
+          )}
+        </div>
+
+        <div
+          className="rounded-2xl border border-slate-200 p-4 text-white shadow-sm"
+          style={{ background: "linear-gradient(to bottom right, #0f172a, #1e293b)" }}
         >
-          {isOpen ? "Restaurant is Open" : "Restaurant is Closed"}
-        </span>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Restaurant state</p>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-2xl font-black">{isOpen ? "Live" : "Paused"}</p>
+              <p className="mt-1 text-sm text-white/70">
+                {isOpen ? "Customers can place orders now." : "Orders are currently paused."}
+              </p>
+            </div>
+            <div className={`h-3 w-3 rounded-full ${isOpen ? "bg-emerald-400" : "bg-rose-400"}`} />
+          </div>
+        </div>
+      </div>
 
-        {/* Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+        <div className="text-sm text-slate-500">
+          Keep your profile, menu, and open status up to date.
+        </div>
+
         <div className="flex flex-wrap gap-2">
-          
-          {/* Save */}
           {editMode && (
             <button
               onClick={saveChanges}
               disabled={loading}
-              className="flex items-center gap-1 rounded-lg bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600 disabled:opacity-50 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <BiSave size={16} />
-              Save
+              {loading ? "Saving..." : "Save changes"}
             </button>
           )}
 
-          {/* Open/Close */}
           {isSeller && (
             <button
               onClick={toggleOpenStatus}
-              className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition ${
+              className={`inline-flex items-center rounded-full px-4 py-2.5 text-sm font-semibold text-white transition ${
                 isOpen
-                  ? "bg-red-500 hover:bg-red-600"
-                  : "bg-green-500 hover:bg-green-600"
+                  ? "bg-rose-500 hover:bg-rose-600"
+                  : "bg-emerald-500 hover:bg-emerald-600"
               }`}
             >
-              {isOpen ? "Close" : "Open"}
+              {isOpen ? "Close restaurant" : "Open restaurant"}
             </button>
           )}
 
-          {/* Logout */}
           {isSeller && (
             <button
               onClick={logoutHandler}
-              className="rounded-lg bg-gray-800 px-4 py-2 text-sm text-white hover:bg-black transition"
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
             >
               Logout
             </button>
           )}
         </div>
       </div>
-
-      {/* Footer */}
-      <p className="text-xs text-gray-400">
-        Created on {new Date(restaurant.createdAt).toLocaleDateString()}
-      </p>
     </div>
   </div>
 );

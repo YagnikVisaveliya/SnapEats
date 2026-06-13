@@ -22,9 +22,11 @@ interface SalesAnalytics {
 }
 
 export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
-  const [range, setRange] = useState<"day" | "week" | "month">("week");
+  const [range, setRange] = useState<"day" | "week" | "month" | "all">("all");
   const [data, setData] = useState<SalesAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const rangeOptions = ["all", "day", "week", "month"] as const;
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -65,6 +67,19 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
     }).format(amount);
   };
 
+  const getRangeLabel = (value: typeof range) => {
+    switch (value) {
+      case "day":
+        return "today";
+      case "week":
+        return "the past week";
+      case "month":
+        return "the past month";
+      case "all":
+        return "all time";
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10">
       {/* Header and Filter */}
@@ -74,10 +89,10 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
           <p className="text-sm font-medium text-slate-500">Monitor your revenue and top items</p>
         </div>
         <div className="flex gap-1.5 rounded-xl bg-slate-100 p-1">
-          {["day", "week", "month"].map((r) => (
+          {rangeOptions.map((r) => (
             <button
               key={r}
-              onClick={() => setRange(r as any)}
+              onClick={() => setRange(r)}
               className={`rounded-lg px-5 py-2 text-sm font-bold capitalize transition-all ${
                 range === r
                   ? "bg-white text-rose-600 shadow-sm ring-1 ring-slate-200/50"
@@ -94,7 +109,10 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
         <>
           {/* Summary Cards */}
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="group relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-green-50 p-6 shadow-sm transition-all hover:shadow-md">
+            <div
+              className="group relative overflow-hidden rounded-3xl border border-emerald-100 p-6 shadow-sm transition-all hover:shadow-md"
+              style={{ background: "linear-gradient(to bottom right, rgba(236, 253, 245, 1), rgba(240, 253, 244, 1))" }}
+            >
               <div className="absolute -right-4 -top-4 rounded-full bg-emerald-200/30 p-8 transition-transform group-hover:scale-110">
                 <BiRupee className="h-16 w-16 text-emerald-400/40" />
               </div>
@@ -105,12 +123,15 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
                 </p>
                 <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-emerald-700">
                   <span className="flex rounded-full bg-emerald-200/50 p-1"><BiTrendingUp /></span>
-                  Sales for the past {range}
+                  Sales for {getRangeLabel(range)}
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 shadow-sm transition-all hover:shadow-md">
+            <div
+              className="group relative overflow-hidden rounded-3xl border border-blue-100 p-6 shadow-sm transition-all hover:shadow-md"
+              style={{ background: "linear-gradient(to bottom right, rgba(239, 246, 255, 1), rgba(238, 242, 255, 1))" }}
+            >
               <div className="absolute -right-4 -top-4 rounded-full bg-blue-200/30 p-8 transition-transform group-hover:scale-110">
                 <BiPackage className="h-16 w-16 text-blue-400/40" />
               </div>
@@ -131,9 +152,9 @@ export const RestaurantSales = ({ restaurantId }: { restaurantId: string }) => {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h3 className="text-lg font-bold text-slate-800">Revenue Over Time</h3>
-              <p className="text-sm text-slate-500">Track your daily income</p>
+              <p className="text-sm text-slate-500">Track your {getRangeLabel(range)} income</p>
             </div>
-            <div className="h-[350px] w-full">
+            <div className="w-full" style={{ height: 350 }}>
               {data.timeSeriesData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data.timeSeriesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
