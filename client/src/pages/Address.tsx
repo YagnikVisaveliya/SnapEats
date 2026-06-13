@@ -139,6 +139,12 @@ const AddAddressPage = () => {
       toast.error("Please select location on map");
       return;
     }
+    if(
+      !/^\d{10}$/.test(mobile.toString())
+    ) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
     try {
       setAdding(true);
       await axios.post(
