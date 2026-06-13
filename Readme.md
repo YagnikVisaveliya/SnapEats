@@ -6,6 +6,14 @@ A full-stack, microservices-based food delivery platform built with TypeScript. 
 
 ---
 
+## Screenshots
+ 
+### Login / Welcome Screen
+ 
+![SnapEats Login Screen](./assets/login-screen.png)
+ 
+---
+
 ## Table of Contents
 
 - [Overview](#overview)
