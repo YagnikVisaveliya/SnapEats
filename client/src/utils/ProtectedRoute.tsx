@@ -6,7 +6,9 @@ const ProtectedRoute = () => {
 
   const location = useLocation();
 
-  if (loading) return null;
+  if (loading) {
+    return <div className="flex min-h-screen items-center justify-center text-gray-500">Loading...</div>;
+  }
 
   if (!isAuth) {
     return <Navigate to={"/login"} replace />;

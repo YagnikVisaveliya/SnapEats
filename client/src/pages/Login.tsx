@@ -26,7 +26,7 @@ const Login = () => {
       setLoading(false);
       setUser(result.data.user);
       setIsAuth(true);
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
       console.log(error);
       toast.error("Problem while login");
@@ -47,7 +47,10 @@ const Login = () => {
           alt="SnapEats Food Delivery"
           className="h-full w-full object-cover transition-transform duration-10000 hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4))" }}
+        />
         
         <div className="absolute top-12 left-12">
           <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
@@ -72,7 +75,10 @@ const Login = () => {
             alt="SnapEats"
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent)" }}
+          />
           <div className="absolute bottom-6 left-6 text-white">
             <h1 className="text-3xl font-black tracking-tight">
               Snap<span className="text-[#E23744]">Eats</span>
