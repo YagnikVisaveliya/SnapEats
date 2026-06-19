@@ -9,10 +9,6 @@ const Navbar = () => {
   const { isAuth, city, quantity } = useAppData();
   const currLocation = useLocation();
 
-  if (currLocation.pathname.toLowerCase() === "/login") {
-    return null;
-  }
-
   const isHomePage = currLocation.pathname === "/";
 
   const [searchParams, setSearchParams] = useSearchParams();

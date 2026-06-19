@@ -123,6 +123,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         setLoadingLocation(false);        
       }
     });
+    // when application is render 1st time that time we will fetch user data and location data, so we can use that data in whole application without fetching again and again
   }, []); 
 
   return (

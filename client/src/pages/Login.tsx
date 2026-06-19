@@ -31,6 +31,8 @@ const Login = () => {
       console.log(error);
       toast.error("Problem while login");
       setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,24 +42,24 @@ const Login = () => {
     flow: "auth-code",
   });
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-white overflow-hidden">
+    <div className="flex min-h-screen flex-col md:flex-row bg-white">
       <div className="relative hidden md:block md:w-1/2 lg:w-3/5 h-screen overflow-hidden">
         <img
           src={snapeatsImg}
           alt="SnapEats Food Delivery"
-          className="h-full w-full object-cover transition-transform duration-10000 hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-[10000ms] hover:scale-105"
         />
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4))" }}
+          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2), rgba(0,0,0,0.4))" }}
         />
-        
+
         <div className="absolute top-12 left-12">
           <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
             Snap<span className="text-[#E23744]">Eats</span>
           </h1>
         </div>
-        
+
         <div className="absolute bottom-16 left-12 right-12 text-white">
           <h2 className="text-4xl font-extrabold tracking-tight md:text-5xl leading-tight drop-shadow">
             Savor the Moment
@@ -68,8 +70,8 @@ const Login = () => {
         </div>
       </div>
 
-      <div className="flex w-full flex-col justify-center px-6 py-12 md:w-1/2 lg:w-2/5 sm:px-12 bg-white relative z-10 min-h-screen">
-        <div className="block md:hidden mb-10 -mx-6 -mt-22 overflow-hidden  shadow-md h-64 relative">
+      <div className="flex w-full flex-1 flex-col justify-center bg-white relative z-10 md:w-1/2 lg:w-2/5 md:py-12 sm:px-12">
+        <div className="relative w-full h-64 overflow-hidden md:hidden">
           <img
             src={snapeatsImg}
             alt="SnapEats"
@@ -77,22 +79,21 @@ const Login = () => {
           />
           <div
             className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent)" }}
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.15))" }}
           />
-          <div className="absolute bottom-6 left-6 text-white">
-            <h1 className="text-3xl font-black tracking-tight">
+          <div className="absolute bottom-5 left-6 right-6 text-white">
+            <h1 className="text-3xl font-black">
               Snap<span className="text-[#E23744]">Eats</span>
             </h1>
-            <p className="text-sm text-gray-200 font-medium">Fresh food delivered fast</p>
+            <p className="text-sm font-medium text-gray-100">
+              Fresh food delivered fast
+            </p>
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-sm space-y-8">
+        <div className="mx-auto w-full max-w-sm flex-1 flex flex-col justify-center space-y-8 px-6 py-8 md:flex-none md:px-0 md:py-0">
           <div className="text-center md:text-left">
-            <h1 className="hidden md:block text-4xl font-black text-[#E23744] tracking-tight">
-              Snap<span className="text-gray-800">Eats</span>
-            </h1>
-            <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
               Welcome back
             </h2>
             <p className="mt-2 text-sm text-gray-500 font-medium">
@@ -100,9 +101,9 @@ const Login = () => {
             </p>
           </div>
 
-          <div className="mt-8 space-y-6">
+          <div className="space-y-6">
             <button
-              onClick={googleLogin}
+              onClick={() => googleLogin()}
               disabled={loading}
               className="flex w-full items-center justify-center gap-3.5 rounded-xl border border-gray-200 bg-white px-5 py-4 text-base font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >

@@ -23,6 +23,7 @@ import Admin from './pages/Admin';
 import ReferAndEarn from './pages/ReferAndEarn';
 import OfferAndDiscount from './pages/OfferAndDiscount';
 import { useEffect } from 'react';
+import MainLayout from './components/MainLayout';
 
 const App = () => {
 
@@ -71,26 +72,28 @@ const App = () => {
   return (
     <>
       <BrowserRouter>
-        <Navbar />
+        {/* <Navbar /> */}
         <Routes>
           <Route element={<PublicRoute/>}>
             <Route path='/login' element={<Login/>}/>
           </Route>
-          <Route element={<ProtectedRoute/>}>
-            <Route path='/' element={<Home/>}/>
-            <Route path='/address' element={<Address/>}/>
-            <Route path='/select-role' element={<SelectRole/>}/>
-            <Route path='/account' element={<Account/>}/>
-            <Route path='/restaurant/:id' element={<RestaurantPage/>}/>
-            <Route path='/cart' element={<Cart/>}/>
-            <Route path='/checkout' element={<CheckOut/>}/>
-            <Route path='/orders' element={<Orders/>}/>
-            <Route path='/order/:id' element={<OrderPage/>}/>
-            <Route path='/paymentsuccess/:paymentId' element={<PaymentSuccess/>}/>
-            <Route path='/order-success' element={<OrderSuccess/>}/>
-            <Route path='/wallet' element={<Wallet/>}/>
-            <Route path='/refer-and-earn' element={<ReferAndEarn/>}/>
-            <Route path='/offers' element={<OfferAndDiscount/>}/>
+          <Route element={<MainLayout />}>
+            <Route element={<ProtectedRoute/>}>
+              <Route path='/' element={<Home/>}/>
+              <Route path='/address' element={<Address/>}/>
+              <Route path='/select-role' element={<SelectRole/>}/>
+              <Route path='/account' element={<Account/>}/>
+              <Route path='/restaurant/:id' element={<RestaurantPage/>}/>
+              <Route path='/cart' element={<Cart/>}/>
+              <Route path='/checkout' element={<CheckOut/>}/>
+              <Route path='/orders' element={<Orders/>}/>
+              <Route path='/order/:id' element={<OrderPage/>}/>
+              <Route path='/paymentsuccess/:paymentId' element={<PaymentSuccess/>}/>
+              <Route path='/order-success' element={<OrderSuccess/>}/>
+              <Route path='/wallet' element={<Wallet/>}/>
+              <Route path='/refer-and-earn' element={<ReferAndEarn/>}/>
+              <Route path='/offers' element={<OfferAndDiscount/>}/>
+            </Route>
 
           </Route>
         </Routes>
