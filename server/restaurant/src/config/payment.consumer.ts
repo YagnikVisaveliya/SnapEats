@@ -2,7 +2,7 @@ import amqp from "amqplib";
 import axios from "axios";
 import { Order } from "../model/order.model.js";
 import { getChannel } from "./rabbitmq.js";
-import { sendOrderEmail } from "../utils/mail.js";
+// import { sendOrderEmail } from "../utils/mail.js";
 
 export const startPaymentConsumer = async () => {
     const channel = getChannel();
@@ -44,7 +44,7 @@ export const startPaymentConsumer = async () => {
                 
                 // Send Confirmation Email to customer
                 console.log(`[Order Debug] Sending Confirmation Email for Order: ${order._id} to ${order.userEmail}`);
-                await sendOrderEmail(order.userEmail, order.restaurantName, order.otp);
+                // await sendOrderEmail(order.userEmail, order.restaurantName, order.otp);
 
                 await axios.post(`${process.env.REALTIME_SERVICE_URL}/api/v1/internal/emit`,{
                     event: "order:new",

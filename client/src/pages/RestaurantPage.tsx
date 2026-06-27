@@ -90,7 +90,11 @@ const RestaurantPage = () => {
       </div>
 
       <div className="rounded-xl bg-white shadow-sm p-4">
-        <RestaurantReviews restaurantId={id as string} />
+        {
+            menuItems.length > 0 && (
+                <RestaurantReviews restaurantId={restaurant._id} />
+            )
+        }
       </div>
     </div>
   )

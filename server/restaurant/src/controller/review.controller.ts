@@ -14,6 +14,15 @@ export const addReview = async (req: AuthenticatedRequest, res: Response) => {
         const { restaurantId } = req.params;
         const { rating, comment } = req.body;
 
+        const order = await mongoose.model("Order").findOne({
+            userId: user._id,
+            restaurantId: new mongoose.Types.ObjectId(restaurantId as string),
+            status: "completed"
+        });
+        if(!order) {
+            return res.status(403).json({ message: "You can only review restaurants you have ordered from" });
+        }
+
         if (!restaurantId || rating === undefined) {
             return res.status(400).json({ message: "RestaurantId and rating are required" });
         }

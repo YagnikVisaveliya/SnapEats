@@ -8,6 +8,7 @@ import { Order } from "../model/order.model.js";
 import axios from "axios";
 import { publishEvent } from "../config/order.pubplisher.js";
 import { Coupon } from "../model/coupon.model.js";
+import { sendOrderEmail } from "../utils/mail.js";
 
 export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   const user = req.user;
@@ -190,6 +191,9 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   });
 
   await Cart.deleteMany({ userId: user._id });
+  await sendOrderEmail(user.email, restaurant.name, otp).catch((err) => {
+    console.error("Failed to send order confirmation email:", err);
+  });
 
   if (couponDiscount > 0 && couponCode) {
     await Coupon.findOneAndUpdate(
