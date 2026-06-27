@@ -1,37 +1,27 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 /**
  * Sends an order confirmation email to the customer
  * @param to Customer email address
- * @param orderDetails Details of the order
+ * @param restaurantName Name of the restaurant
+ * @param otp Delivery OTP
  */
-
-
 export const sendOrderEmail = async (to: string, restaurantName: string, otp: number) => {
   try {
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const apiKey = process.env.RESEND_API_KEY;
 
-    if (!smtpUser || !smtpPass) {
+    if (!apiKey) {
       console.warn(
-        "⚠️ SMTP credentials are missing. Set SMTP_USER and SMTP_PASS in restaurant/.env to enable order confirmation emails."
+        "⚠️ Resend API key is missing. Set RESEND_API_KEY in your .env to enable order confirmation emails."
       );
       return false;
     }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
+    const resend = new Resend(apiKey);
 
-    const mailOptions = {
-      from: process.env.SMTP_FROM || `"SnapEats" <${smtpUser}>`,
-      to: to,
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM || "SnapEats <onboarding@resend.dev>",
+      to,
       subject: "Order Placed Successfully! - SnapEats",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
@@ -47,10 +37,14 @@ export const sendOrderEmail = async (to: string, restaurantName: string, otp: nu
           <p style="font-size: 12px; color: #a4b0be; text-align: center;">Enjoy your SnapEats!<br>© 2026 SnapEats Team</p>
         </div>
       `,
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent successfully to ${to}. MessageID: ${info.messageId}`);
+    if (error) {
+      console.error(`❌ Failed to send email to ${to}:`, error);
+      return false;
+    }
+
+    console.log(`✅ Email sent successfully to ${to}. MessageID: ${data?.id}`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
